@@ -1,0 +1,465 @@
+// WelcomePage.scss
+// Variables
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$secondary-gradient: linear-gradient(45deg, #ff6b6b, #ee5a24);
+$accent-gradient: linear-gradient(45deg, #ffd700, #ffed4e);
+$card-gradient: linear-gradient(135deg, #667eea, #764ba2);
+
+$primary-color: #667eea;
+$secondary-color: #ff6b6b;
+$accent-color: #ffd700;
+$text-dark: #333;
+$text-light: #666;
+$white: #fff;
+$white-transparent: rgba(255, 255, 255, 0.1);
+$white-transparent-2: rgba(255, 255, 255, 0.2);
+$white-transparent-3: rgba(255, 255, 255, 0.3);
+$white-transparent-9: rgba(255, 255, 255, 0.9);
+$footer-bg: #2c3e50;
+$footer-border: #34495e;
+$footer-text: #bdc3c7;
+$footer-text-light: #ecf0f1;
+
+$border-radius-sm: 15px;
+$border-radius-md: 20px;
+$border-radius-lg: 25px;
+$border-radius-xl: 30px;
+$border-radius-xxl: 50px;
+
+$shadow-sm: 0 4px 15px rgba(255, 107, 107, 0.4);
+$shadow-md: 0 10px 30px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+$shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+$shadow-primary: 0 6px 20px rgba(255, 107, 107, 0.6);
+
+$transition: all 0.3s ease;
+$container-max-width: 1200px;
+$hero-min-height: 70vh;
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@mixin button-base {
+  padding: 15px 30px;
+  border: none;
+  border-radius: $border-radius-xl;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $transition;
+  text-decoration: none;
+  display: inline-block;
+}
+
+@mixin card-base {
+  background: $white;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-md;
+  transition: $transition;
+}
+
+@mixin gradient-text($gradient) {
+  background: $gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@mixin responsive($breakpoint) {
+  @if $breakpoint == mobile {
+    @media (max-width: 768px) { @content; }
+  }
+}
+
+// Main Styles
+.welcome-page {
+  min-height: 100vh;
+  background: $primary-gradient;
+  color: $text-dark;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  .welcome-container {
+    max-width: $container-max-width;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  // Header Styles
+  .welcome-header {
+    @include flex-between;
+    padding: 20px 0;
+    position: relative;
+    z-index: 100;
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      &-icon {
+        font-size: 2rem;
+        animation: bounce 2s infinite;
+      }
+
+      &-text {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: $white;
+        margin: 0;
+      }
+    }
+
+    .nav-menu {
+      display: flex;
+      gap: 20px;
+
+      .nav-btn {
+        background: $white-transparent;
+        border: 1px solid $white-transparent-2;
+        color: $white;
+        padding: 10px 20px;
+        border-radius: $border-radius-lg;
+        cursor: pointer;
+        transition: $transition;
+        backdrop-filter: blur(10px);
+
+        &:hover {
+          background: $white-transparent-2;
+          transform: translateY(-2px);
+        }
+      }
+    }
+  }
+
+  // Hero Section
+  .hero-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    padding: 80px 0;
+    min-height: $hero-min-height;
+
+    .hero-content {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeInUp 1s ease forwards;
+
+      .hero-title {
+        font-size: 3.5rem;
+        font-weight: bold;
+        color: $white;
+        margin-bottom: 20px;
+        line-height: 1.2;
+
+        .highlight {
+          @include gradient-text($accent-gradient);
+        }
+      }
+
+      .hero-subtitle {
+        font-size: 1.2rem;
+        color: $white-transparent-9;
+        margin-bottom: 40px;
+        line-height: 1.6;
+      }
+
+      .hero-buttons {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+    }
+
+    .hero-visual {
+      @include flex-center;
+
+      .floating-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: $border-radius-md;
+        padding: 30px;
+        box-shadow: $shadow-lg;
+        backdrop-filter: blur(20px);
+        animation: float 6s ease-in-out infinite;
+        max-width: 300px;
+
+        .card-header {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          margin-bottom: 25px;
+
+          .card-icon {
+            font-size: 2rem;
+          }
+
+          .card-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: $text-dark;
+          }
+        }
+
+        .card-content {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+
+          .metric {
+            text-align: center;
+            padding: 15px;
+            background: $card-gradient;
+            border-radius: $border-radius-sm;
+            color: $white;
+
+            &-value {
+              display: block;
+              font-size: 1.8rem;
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+
+            &-label {
+              font-size: 0.9rem;
+              opacity: 0.9;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Features Section
+  .features-section {
+    padding: 100px 0;
+    background: $white;
+    border-radius: $border-radius-xxl $border-radius-xxl 0 0;
+    margin-top: -50px;
+    position: relative;
+    z-index: 10;
+
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: $text-dark;
+      margin-bottom: 60px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-top: 60px;
+
+      .feature-card {
+        @include card-base;
+        padding: 40px 30px;
+        text-align: center;
+        border: 2px solid transparent;
+
+        &:hover {
+          transform: translateY(-10px);
+          box-shadow: $shadow-xl;
+        }
+
+        &.active {
+          border-color: $primary-color;
+          transform: translateY(-10px);
+        }
+
+        .feature-icon {
+          font-size: 3rem;
+          margin-bottom: 20px;
+          display: block;
+        }
+
+        .feature-title {
+          font-size: 1.3rem;
+          font-weight: bold;
+          color: $text-dark;
+          margin-bottom: 15px;
+        }
+
+        .feature-description {
+          color: $text-light;
+          line-height: 1.6;
+        }
+      }
+    }
+  }
+
+  // CTA Section
+  .cta-section {
+    background: $primary-gradient;
+    padding: 100px 0;
+    text-align: center;
+    color: $white;
+
+    .cta-title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .cta-subtitle {
+      font-size: 1.2rem;
+      margin-bottom: 40px;
+      opacity: 0.9;
+    }
+  }
+
+  // Footer
+  .welcome-footer {
+    background: $footer-bg;
+    color: $white;
+    padding: 60px 0 20px;
+
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 40px;
+      margin-bottom: 40px;
+
+      .footer-section {
+        h3, h4 {
+          margin-bottom: 20px;
+          color: $footer-text-light;
+        }
+
+        ul {
+          list-style: none;
+          padding: 0;
+
+          li {
+            margin-bottom: 10px;
+            color: $footer-text;
+            cursor: pointer;
+            transition: color 0.3s ease;
+
+            &:hover {
+              color: $white;
+            }
+          }
+        }
+      }
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid $footer-border;
+      color: $footer-text;
+    }
+  }
+}
+
+// Button Styles
+.btn {
+  @include button-base;
+
+  &-primary {
+    background: $secondary-gradient;
+    color: $white;
+    box-shadow: $shadow-sm;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: $shadow-primary;
+    }
+  }
+
+  &-secondary {
+    background: $white-transparent;
+    color: $white;
+    border: 2px solid $white-transparent-3;
+    backdrop-filter: blur(10px);
+
+    &:hover {
+      background: $white-transparent-2;
+      transform: translateY(-3px);
+    }
+  }
+
+  &-large {
+    padding: 18px 40px;
+    font-size: 1.1rem;
+  }
+}
+
+// Animations
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+// Loading Animation
+.welcome-page.loaded {
+  .hero-content {
+    animation: fadeInUp 1s ease forwards;
+  }
+
+  .floating-card {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+// Responsive Design
+@include responsive(mobile) {
+  .welcome-page {
+    .hero-section {
+      grid-template-columns: 1fr;
+      text-align: center;
+      gap: 40px;
+
+      .hero-title {
+        font-size: 2.5rem;
+      }
+    }
+
+    .nav-menu {
+      display: none;
+    }
+
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-buttons {
+      justify-content: center;
+    }
+  }
+}
