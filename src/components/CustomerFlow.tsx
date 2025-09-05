@@ -4,9 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Search, Phone, CheckCircle, Package } from "lucide-react";
-import { mockProducts, createOptIn, createRequest, sendSMS, Product } from "@/lib/mockData";
+import { Search, Phone, CheckCircle, Package, Loader2, AlertCircle } from "lucide-react";
+import { createOptIn, createRequest, sendSMS, Product } from "@/lib/mockData";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchProducts } from "@/hooks/useSearchProducts";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type Step = 'search' | 'phone' | 'success';
 
@@ -20,10 +22,8 @@ const CustomerFlow = () => {
   const [isCustomProduct, setIsCustomProduct] = useState(false);
   const { toast } = useToast();
 
-  const filteredProducts = mockProducts.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Use the custom hook for API-based product search with debouncing
+  const { products: filteredProducts, isLoading, error, hasSearched } = useSearchProducts(searchQuery);
 
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
@@ -106,7 +106,7 @@ const CustomerFlow = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products..."
+                  placeholder="Search products... (min 2 characters)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -115,23 +115,52 @@ const CustomerFlow = () => {
 
               {searchQuery && (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {filteredProducts.map((product) => (
-                    <Card 
-                      key={product.id}
-                      className="cursor-pointer hover:shadow-md transition-all"
-                      onClick={() => handleProductSelect(product)}
-                    >
-                      <CardContent className="flex items-center justify-between p-4">
-                        <div>
-                          <h4 className="font-medium">{product.name}</h4>
-                          <p className="text-sm text-muted-foreground">{product.category}</p>
-                        </div>
-                        <Badge variant={product.inStock ? "success" : "secondary"}>
-                          {product.inStock ? "In Stock" : "Notify Me"}
-                        </Badge>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {/* Loading State */}
+                  {isLoading && (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <span className="ml-2 text-sm text-muted-foreground">Searching products...</span>
+                    </div>
+                  )}
+
+                  {/* Error State */}
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* No Results State */}
+                  {!isLoading && !error && hasSearched && filteredProducts.length === 0 && (
+                    <div className="text-center py-8">
+                      <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No products found for "{searchQuery}"</p>
+                    </div>
+                  )}
+
+                  {/* Search Results */}
+                  {!isLoading && !error && filteredProducts.length > 0 && (
+                    <>
+                      {filteredProducts.map((product) => (
+                        <Card 
+                          key={product.id}
+                          className="cursor-pointer hover:shadow-md transition-all"
+                          onClick={() => handleProductSelect(product)}
+                        >
+                          <CardContent className="flex items-center justify-between p-4">
+                            <div>
+                              <h4 className="font-medium">{product.name}</h4>
+                              <p className="text-sm text-muted-foreground">{product.category}</p>
+                            </div>
+                            <Badge variant={product.inStock ? "default" : "secondary"}>
+                              {product.inStock ? "In Stock" : "Notify Me"}
+                            </Badge>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
 
