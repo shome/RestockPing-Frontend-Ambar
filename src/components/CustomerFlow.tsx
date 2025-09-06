@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Search, Phone, CheckCircle, Package, Loader2, AlertCircle, Clock } from "lucide-react";
-import { createOptIn, createRequest, sendSMS, Product } from "@/lib/mockData";
+import { Product } from "@/lib/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchProducts } from "@/hooks/useSearchProducts";
+import { apiService, CreateRequestPayload, VerifyCaptchaPayload } from "@/lib/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MathCaptcha } from "@/components/ui/math-captcha";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -17,7 +18,11 @@ import { useCaptchaThrottle } from "@/hooks/useCaptchaThrottle";
 
 type Step = 'search' | 'phone' | 'success';
 
-const CustomerFlow = () => {
+interface CustomerFlowProps {
+  locationId?: string | null;
+}
+
+const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
   const [step, setStep] = useState<Step>('search');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -29,24 +34,50 @@ const CustomerFlow = () => {
   const [isImageValid, setIsImageValid] = useState(false);
   const [consent, setConsent] = useState(false);
   const [isCustomProduct, setIsCustomProduct] = useState(false);
+  const [captchaSessionId, setCaptchaSessionId] = useState<string | null>(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string>('');
   const { toast } = useToast();
 
   // Generate a simple identifier for throttling (in a real app, this would be the user's IP)
   // Use a fixed identifier for the session to properly track requests
   const userIdentifier = 'session_user';
   const { 
-    isCaptchaVerified, 
     isThrottled, 
     remainingRequests, 
     timeUntilReset, 
-    verifyCaptcha, 
     checkThrottle, 
     resetCaptcha 
   } = useCaptchaThrottle(userIdentifier);
 
   // Enhanced captcha verification
-  const handleCaptchaVerify = (isValid: boolean) => {
-    verifyCaptcha(isValid);
+  const handleCaptchaVerify = async (isValid: boolean, sessionId?: string, answer?: number): Promise<void> => {
+    console.log('Captcha verification:', { isValid, sessionId, answer });
+    
+    // Always capture session ID and answer for API submission
+    if (sessionId && answer !== undefined) {
+      setCaptchaSessionId(sessionId);
+      setCaptchaAnswer(answer);
+      console.log('Captcha data set:', { sessionId, answer });
+      
+      // Immediately verify with backend
+      const captchaPayload: VerifyCaptchaPayload = {
+        captchaSessionId: sessionId,
+        captchaAnswer: answer,
+      };
+
+      const captchaResponse = await apiService.verifyCaptcha(captchaPayload);
+      
+      // Only consider successful if success: true
+      if (!captchaResponse.success) {
+        // Trigger throttling for failed captcha attempts
+        checkThrottle(userIdentifier);
+        throw new Error(captchaResponse.message || 'Captcha verification failed');
+      }
+
+      console.log('Captcha verified successfully');
+    }
   };
 
   // Handle every captcha attempt for throttling
@@ -58,6 +89,7 @@ const CustomerFlow = () => {
   React.useEffect(() => {
     checkThrottle(userIdentifier);
   }, [checkThrottle, userIdentifier]);
+
 
   // Use the custom hook for API-based product search with debouncing
   const { products: filteredProducts, isLoading, error, hasSearched } = useSearchProducts(searchQuery);
@@ -74,7 +106,7 @@ const CustomerFlow = () => {
     setStep('phone');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Check throttling first - this will update the state and show alert if needed
     const isAllowed = checkThrottle(userIdentifier);
     if (!isAllowed) {
@@ -97,7 +129,7 @@ const CustomerFlow = () => {
       return;
     }
 
-    if (!isCaptchaVerified) {
+    if (!captchaSessionId || captchaAnswer === null || captchaAnswer === undefined) {
       toast({
         title: "Security check required",
         description: "Please complete the math captcha to continue.",
@@ -106,7 +138,7 @@ const CustomerFlow = () => {
       return;
     }
 
-    if (!isImageValid || !uploadedImage) {
+    if (isCustomProduct && (!isImageValid || !uploadedImage)) {
       toast({
         title: "Image required",
         description: "Please upload an image before proceeding.",
@@ -133,21 +165,75 @@ const CustomerFlow = () => {
       return;
     }
 
-    // Process the request
+    // Process the request via API
     const fullPhoneNumber = selectedCountry.dialCode + phone;
-    if (isCustomProduct) {
-      // Create a request for unknown department
-      createRequest(fullPhoneNumber, customProductName);
-      const message = `Got it! You asked for '${customProductName}'. We'll match it and text you when it's in. Reply STOP to unsubscribe.`;
-      sendSMS(fullPhoneNumber, message, 'request_confirmation');
-    } else if (selectedProduct) {
-      // Create opt-in for known department
-      createOptIn(fullPhoneNumber, selectedProduct.id, selectedProduct.name);
-      const message = `Thanks! We'll text when ${selectedProduct.name} is back. Reply STOP to unsubscribe.`;
-      sendSMS(fullPhoneNumber, message, 'confirmation');
+    
+    // Validate required captcha data
+    if (!captchaSessionId || captchaAnswer === null || captchaAnswer === undefined) {
+      console.log('Captcha validation failed:', { captchaSessionId, captchaAnswer });
+      toast({
+        title: "Captcha error",
+        description: "Please complete the captcha again.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setStep('success');
+    // Validate location ID
+    if (!locationId) {
+      toast({
+        title: "Location error",
+        description: "Location ID is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Proceed with the main request (captcha is already verified)
+      const payload: CreateRequestPayload = {
+        locationId: locationId,
+        phone: fullPhoneNumber,
+      };
+
+      console.log('API Payload:', payload);
+
+      if (isCustomProduct) {
+        // Custom department request
+        payload.labelName = customProductName;
+        if (uploadedImage) {
+          payload.image = uploadedImage;
+        }
+      } else if (selectedProduct) {
+        // Existing department request
+        payload.labelId = selectedProduct.id;
+      }
+
+      const response = await apiService.createRequest(payload);
+      
+      if (response.success) {
+        // Store the success message from API response
+        setSuccessMessage(response.message || 'Request submitted successfully!');
+        setStep('success');
+      } else {
+        throw new Error(response.message || 'Request failed');
+      }
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      
+      // Get error message from API response
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      
+      toast({
+        title: "Submission failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -162,6 +248,10 @@ const CustomerFlow = () => {
     setIsImageValid(false);
     setConsent(false);
     setIsCustomProduct(false);
+    setCaptchaSessionId(null);
+    setCaptchaAnswer(null);
+    setIsSubmitting(false);
+    setSuccessMessage('');
     resetCaptcha();
   };
 
@@ -285,15 +375,17 @@ const CustomerFlow = () => {
                 />
               )}
 
-              {/* Image Upload */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Upload Image (Required)</label>
-                <ImageUpload
-                  value={uploadedImage}
-                  onChange={setUploadedImage}
-                  onValidationChange={setIsImageValid}
-                />
-              </div>
+              {/* Image Upload - Only for custom products */}
+              {isCustomProduct && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Upload Image (Required)</label>
+                  <ImageUpload
+                    value={uploadedImage}
+                    onChange={setUploadedImage}
+                    onValidationChange={setIsImageValid}
+                  />
+                </div>
+              )}
 
               {/* Country Selector and Phone Input in single line */}
               <div className="flex gap-2">
@@ -362,20 +454,33 @@ const CustomerFlow = () => {
                   className="flex-1" 
                   onClick={handleSubmit}
                   disabled={
-                    // Core requirements: consent + captcha + valid phone + image
+                    // Core requirements: consent + captcha + valid phone
                     !consent || 
-                    !isCaptchaVerified || 
+                    !captchaSessionId || 
+                    captchaAnswer === null ||
                     !isPhoneValid ||
-                    !isImageValid ||
+                    // Image requirement only for custom products
+                    (isCustomProduct && !isImageValid) ||
                     // Additional requirements
                     !phone.trim() || 
                     !selectedCountry ||
-                    !uploadedImage ||
+                    (isCustomProduct && !uploadedImage) ||
                     isThrottled ||
-                    (isCustomProduct && !customProductName.trim())
+                    (isCustomProduct && !customProductName.trim()) ||
+                    // Loading state
+                    isSubmitting
                   }
                 >
-                  {isThrottled ? 'Too Many Requests' : 'Get Notifications'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : isThrottled ? (
+                    'Too Many Requests'
+                  ) : (
+                    'Get Notifications'
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -389,10 +494,11 @@ const CustomerFlow = () => {
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold text-foreground">All Set!</h3>
                 <p className="text-muted-foreground">
-                  {isCustomProduct 
-                    ? "We've received your request and will match it to a department. You'll get a text when it's available."
-                    : `We'll text you about ${selectedProduct?.name} updates.`
-                  }
+                  {successMessage || (
+                    isCustomProduct 
+                      ? "We've received your request and will match it to a department. You'll get a text when it's available."
+                      : `We'll text you about ${selectedProduct?.name} updates.`
+                  )}
                 </p>
               </div>
               <Button variant="customer" onClick={handleReset}>

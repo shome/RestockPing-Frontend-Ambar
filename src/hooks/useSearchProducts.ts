@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDebounce } from './useDebounce';
-import { apiService, ApiLabel, SearchLabelsResponse } from '@/lib/api';
+import { apiService, ApiLabel, SearchLabelsResponse, ApiErrorHandler } from '@/lib/api';
 
 interface UseSearchLabelsReturn {
   labels: ApiLabel[];
@@ -53,7 +53,8 @@ export function useSearchLabels(
         setLabels(response.labels || []);
       } catch (err) {
         console.error('Search error:', err);
-        setError('Failed to search labels. Please try again.');
+        const errorMessage = ApiErrorHandler.getErrorMessage(err);
+        setError(errorMessage);
         setLabels([]);
       } finally {
         setIsLoading(false);
