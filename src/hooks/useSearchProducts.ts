@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useDebounce } from './useDebounce';
-import { apiService, ApiProduct, SearchProductsResponse } from '@/lib/api';
+import { apiService, ApiLabel, SearchLabelsResponse } from '@/lib/api';
 
-interface UseSearchProductsReturn {
-  products: ApiProduct[];
+interface UseSearchLabelsReturn {
+  labels: ApiLabel[];
   isLoading: boolean;
   error: string | null;
   hasSearched: boolean;
 }
 
 /**
- * Custom hook for searching products with debouncing
+ * Custom hook for searching labels with debouncing
  * @param searchQuery - The search query string
  * @param debounceDelay - Delay in milliseconds for debouncing (default: 500ms)
  * @param limit - Maximum number of results to return (default: 10)
- * @returns Object containing products, loading state, error, and search status
+ * @returns Object containing labels, loading state, error, and search status
  */
-export function useSearchProducts(
+export function useSearchLabels(
   searchQuery: string,
   debounceDelay: number = 500,
   limit: number = 10
-): UseSearchProductsReturn {
-  const [products, setProducts] = useState<ApiProduct[]>([]);
+): UseSearchLabelsReturn {
+  const [labels, setLabels] = useState<ApiLabel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
@@ -32,36 +32,61 @@ export function useSearchProducts(
   useEffect(() => {
     // Don't search if query is empty or too short
     if (!debouncedSearchQuery || debouncedSearchQuery.trim().length < 2) {
-      setProducts([]);
+      setLabels([]);
       setIsLoading(false);
       setError(null);
       setHasSearched(false);
       return;
     }
 
-    const searchProducts = async () => {
+    const searchLabels = async () => {
       setIsLoading(true);
       setError(null);
       setHasSearched(true);
 
       try {
-        const response: SearchProductsResponse = await apiService.searchProducts(
+        const response: SearchLabelsResponse = await apiService.searchLabels(
           debouncedSearchQuery,
           limit
         );
         
-        setProducts(response.products || []);
+        setLabels(response.labels || []);
       } catch (err) {
         console.error('Search error:', err);
-        setError('Failed to search products. Please try again.');
-        setProducts([]);
+        setError('Failed to search labels. Please try again.');
+        setLabels([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    searchProducts();
+    searchLabels();
   }, [debouncedSearchQuery, limit]);
+
+  return {
+    labels,
+    isLoading,
+    error,
+    hasSearched,
+  };
+}
+
+// Backward compatibility - map labels to products structure for existing components
+export function useSearchProducts(
+  searchQuery: string,
+  debounceDelay: number = 500,
+  limit: number = 10
+) {
+  const { labels, isLoading, error, hasSearched } = useSearchLabels(searchQuery, debounceDelay, limit);
+  
+  // Map labels to the old product structure for backward compatibility
+  const products = labels.map(label => ({
+    id: label.id,
+    name: label.name,
+    code: label.code,
+    category: label.synonyms || 'Department',
+    inStock: label.active
+  }));
 
   return {
     products,

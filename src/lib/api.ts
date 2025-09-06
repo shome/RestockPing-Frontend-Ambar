@@ -1,12 +1,13 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 
 // API Response types
-export interface ApiProduct {
+export interface ApiLabel {
   id: string;
-  name: string;
+  location_id: string;
   code: string;
-  category: string;
-  inStock: boolean;
+  name: string;
+  synonyms: string;
+  active: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -15,10 +16,10 @@ export interface ApiResponse<T> {
   success: boolean;
 }
 
-export interface SearchProductsResponse {
-  products: ApiProduct[];
+export interface SearchLabelsResponse {
+  success: boolean;
+  labels: ApiLabel[];
   total: number;
-  hasMore: boolean;
 }
 
 // Get API base URL from environment variables
@@ -84,14 +85,14 @@ apiClient.interceptors.response.use(
 // API service functions
 export const apiService = {
   /**
-   * Search for products using the API
+   * Search for labels using the API
    * @param query - Search query string
    * @param limit - Maximum number of results to return
    * @returns Promise with search results
    */
-  searchProducts: async (query: string, limit: number = 10): Promise<SearchProductsResponse> => {
+  searchLabels: async (query: string, limit: number = 10): Promise<SearchLabelsResponse> => {
     try {
-      const response = await apiClient.get<SearchProductsResponse>('/api/labels', {
+      const response = await apiClient.get<SearchLabelsResponse>('/api/labels', {
         params: {
           query: query.trim(),
           limit,
@@ -101,19 +102,19 @@ export const apiService = {
       // Handle different response structures
       const data = response.data;
       
-      // If the API returns products directly in an array
+      // If the API returns labels directly in an array
       if (Array.isArray(data)) {
         return {
-          products: data,
+          success: true,
+          labels: data,
           total: data.length,
-          hasMore: data.length >= limit,
         };
       }
       
       // If the API returns the expected structure
       return data;
     } catch (error) {
-      console.error('Error searching products:', error);
+      console.error('Error searching labels:', error);
       throw error;
     }
   },
