@@ -85,7 +85,7 @@ export function useSearchProducts(
     id: label.id,
     name: label.name,
     code: label.code,
-    category: label.synonyms || 'Department',
+    category: label.synonyms || 'Product',
     inStock: label.active
   }));
 

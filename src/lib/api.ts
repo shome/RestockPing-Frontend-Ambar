@@ -26,9 +26,9 @@ export interface SearchLabelsResponse {
 export interface CreateRequestPayload {
   locationId: string;
   phone: string;
-  labelName?: string; // For custom departments
-  labelId?: string; // For existing departments
-  image?: File; // For custom departments
+  labelName?: string; // For custom products
+  labelId?: string; // For existing products
+  image?: File; // For custom products
 }
 
 export interface CreateRequestResponse {
@@ -242,7 +242,7 @@ export const apiService = {
   },
 
   /**
-   * Create a new request (existing or custom department)
+   * Create a new request (existing or custom product)
    * @param payload - Request payload with all required data
    * @returns Promise with request creation result
    */
