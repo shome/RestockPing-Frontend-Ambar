@@ -158,8 +158,8 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
 
     if (isCustomProduct && !customProductName.trim()) {
       toast({
-        title: "Missing department name",
-        description: "Please enter the department name.",
+        title: "Missing product name",
+        description: "Please enter the product name.",
         variant: "destructive",
       });
       return;
@@ -201,13 +201,13 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
       console.log('API Payload:', payload);
 
       if (isCustomProduct) {
-        // Custom department request
+        // Custom product request
         payload.labelName = customProductName;
         if (uploadedImage) {
           payload.image = uploadedImage;
         }
       } else if (selectedProduct) {
-        // Existing department request
+        // Existing product request
         payload.labelId = selectedProduct.id;
       }
 
@@ -261,8 +261,8 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
         {/* Header */}
         <div className="text-center space-y-2">
           <Package className="h-12 w-12 text-primary mx-auto" />
-          <h1 className="text-2xl font-bold text-foreground">Department Notifications</h1>
-          <p className="text-muted-foreground">Get notified about department updates</p>
+          <h1 className="text-2xl font-bold text-foreground">Product Notifications</h1>
+          <p className="text-muted-foreground">Get notified about product updates</p>
         </div>
 
         {step === 'search' && (
@@ -270,17 +270,17 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Search className="h-5 w-5" />
-                Find Your Department
+                Find Your Product
               </CardTitle>
               <CardDescription>
-                Search for the department you want to be notified about
+                Search for the product you want to be notified about
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search departments... (min 2 characters)"
+                  placeholder="Search products... (min 2 characters)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -293,7 +293,7 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
                   {isLoading && (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      <span className="ml-2 text-sm text-muted-foreground">Searching departments...</span>
+                      <span className="ml-2 text-sm text-muted-foreground">Searching products...</span>
                     </div>
                   )}
 
@@ -309,7 +309,7 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
                   {!isLoading && !error && hasSearched && filteredProducts.length === 0 && (
                     <div className="text-center py-8">
                       <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">No departments found for "{searchQuery}"</p>
+                      <p className="text-sm text-muted-foreground">No products found for "{searchQuery}"</p>
                     </div>
                   )}
 
@@ -345,7 +345,7 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
                   className="w-full"
                   onClick={handleCantFind}
                 >
-                  Can't find this department
+                  Can't find this product
                 </Button>
               </div>
             </CardContent>
@@ -361,7 +361,7 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
               </CardTitle>
               <CardDescription>
                 {isCustomProduct 
-                  ? "Tell us what department you're looking for and we'll find it"
+                  ? "Tell us what product you're looking for and we'll find it"
                   : `Get notified about ${selectedProduct?.name} updates`
                 }
               </CardDescription>
@@ -369,7 +369,7 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
             <CardContent className="space-y-4">
               {isCustomProduct && (
                 <Input
-                  placeholder="What department are you looking for?"
+                  placeholder="What product are you looking for?"
                   value={customProductName}
                   onChange={(e) => setCustomProductName(e.target.value)}
                 />
@@ -440,7 +440,7 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
                   onCheckedChange={(checked) => setConsent(checked as boolean)}
                 />
                 <label htmlFor="consent" className="text-sm text-muted-foreground leading-5">
-                  I agree to receive SMS notifications about department updates. 
+                  I agree to receive SMS notifications about product updates. 
                   Message and data rates may apply. Reply STOP to unsubscribe.
                 </label>
               </div>
@@ -496,13 +496,13 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
                 <p className="text-muted-foreground">
                   {successMessage || (
                     isCustomProduct 
-                      ? "We've received your request and will match it to a department. You'll get a text when it's available."
+                      ? "We've received your request and will match it to a product. You'll get a text when it's available."
                       : `We'll text you about ${selectedProduct?.name} updates.`
                   )}
                 </p>
               </div>
               <Button variant="customer" onClick={handleReset}>
-                Search Another Department
+                Search Another Product
               </Button>
             </CardContent>
           </Card>
