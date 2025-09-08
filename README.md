@@ -10,6 +10,8 @@ A modern, responsive React application for smart inventory management with a bea
 - **Smooth Animations** - CSS animations and transitions
 - **Component-Based Architecture** - Modular and maintainable code
 - **Cross-Browser Compatible** - Works on all modern browsers
+- **API Integration** - Real-time product search with debouncing
+- **Environment Configuration** - Flexible API endpoint configuration
 
 ## 🎨 Landing Page Sections
 
@@ -49,15 +51,35 @@ cd RestockPing-Frontend
 npm install
 ```
 
-### 3. Start Development Server
+### 3. Environment Configuration
+
+Create a `.env` file in the root directory (copy from `.env.example`):
+
+```bash
+cp .env.example .env
+```
+
+Configure your environment variables:
+
+```env
+# API Configuration
+VITE_API_BASE_URL=http://localhost:3000
+
+# Environment
+VITE_NODE_ENV=development
+```
+
+**Important**: Update `VITE_API_BASE_URL` to match your backend API URL.
+
+### 4. Start Development Server
 
 ```bash
 npm start
 ```
 
-The application will open in your browser at `http://localhost:3000`.
+The application will open in your browser at `http://localhost:5173` (Vite default port).
 
-### 4. Build for Production
+### 5. Build for Production
 
 ```bash
 npm run build
@@ -94,6 +116,33 @@ RestockPing-Frontend/
 - **`npm run build`** - Builds the app for production
 - **`npm test`** - Launches the test runner
 - **`npm run eject`** - Ejects from Create React App (⚠️ irreversible)
+
+## 🔌 API Integration
+
+The application includes a robust API integration layer:
+
+### Features
+- **Debounced Search** - 500ms delay prevents excessive API calls
+- **Loading States** - Visual feedback during API requests
+- **Error Handling** - Graceful error messages and fallbacks
+- **Type Safety** - Full TypeScript support for API responses
+- **Environment Configuration** - Configurable API endpoints
+
+### API Endpoint
+The search functionality calls:
+```
+GET {VITE_API_BASE_URL}/api/labels?query={searchQuery}&limit=10
+```
+
+### Custom Hooks
+- `useDebounce` - Debounces any value with configurable delay
+- `useSearchProducts` - Combines debouncing with API calls for product search
+
+### Configuration
+Update the API base URL in your `.env` file:
+```env
+VITE_API_BASE_URL=http://your-api-server.com
+```
 
 ## 🎨 SCSS Architecture
 
