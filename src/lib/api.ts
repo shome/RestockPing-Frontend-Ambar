@@ -58,6 +58,31 @@ export interface FetchCaptchaResponse {
   expiresIn?: number;
 }
 
+export interface ApiLocation {
+  id: string;
+  name: string;
+  slug: string;
+  timezone: string;
+}
+
+export interface FetchLocationsResponse {
+  success: boolean;
+  locations: ApiLocation[];
+  total: number;
+}
+
+export interface TeamLoginPayload {
+  pin: string;
+  location_id: string;
+}
+
+export interface TeamLoginResponse {
+  success: boolean;
+  session_token?: string;
+  expires_in?: number;
+  message?: string;
+}
+
 // Error types for better error handling
 export interface ApiError {
   message: string;
@@ -129,11 +154,11 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor for logging and adding auth headers if needed
 apiClient.interceptors.request.use(
   (config) => {
-    // Add any auth tokens or other headers here if needed
-    // const token = localStorage.getItem('authToken');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    // Add JWT token to requests if available
+    const token = localStorage.getItem('team_session_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
@@ -159,7 +184,14 @@ apiClient.interceptors.response.use(
     });
     
     // Handle specific error cases
-    if (error.response?.status === 404) {
+    if (error.response?.status === 401) {
+      // Unauthorized - token expired or invalid
+      console.warn('Unauthorized access - redirecting to login');
+      // Import dynamically to avoid circular dependency
+      import('./auth').then(({ redirectToTeamLogin }) => {
+        redirectToTeamLogin();
+      });
+    } else if (error.response?.status === 404) {
       console.warn('Resource not found');
     } else if (error.response?.status >= 500) {
       console.error('Server error occurred');
@@ -238,6 +270,39 @@ export const apiService = {
       // Transform the error to include user-friendly message
       const apiError = ApiErrorHandler.getErrorDetails(error);
       throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Fetch locations from the backend
+   * @returns Promise with locations data
+   */
+  fetchLocations: async (): Promise<FetchLocationsResponse> => {
+    try {
+      const response = await apiClient.get<FetchLocationsResponse>('/api/locations');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      // Transform the error to include user-friendly message
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Team login with PIN and location
+   * @param payload - Login payload with PIN and location ID
+   * @returns Promise with login result including JWT token
+   */
+  teamLogin: async (payload: TeamLoginPayload): Promise<TeamLoginResponse> => {
+    try {
+      const response = await apiClient.post<TeamLoginResponse>('/api/team/login', payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error during team login:', error);
+      // For team login, we want to preserve the API error response structure
+      // Don't transform the error, let the component handle the response
+      throw error;
     }
   },
 

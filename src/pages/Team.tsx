@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Clock, CheckCircle, Search, Send } from "lucide-react";
+import { Bell, Clock, CheckCircle, Search, Send, History, QrCode, Package } from "lucide-react";
+import AuditLog from "@/components/AuditLog";
+import ProductScanner from "@/components/ProductScanner";
 import { 
   mockProducts, 
   mockOptIns, 
@@ -24,6 +26,9 @@ const Team = ({ onLogout }: TeamProps) => {
   const [notifySearch, setNotifySearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAssigning, setIsAssigning] = useState<string | null>(null);
+  const [showAuditLog, setShowAuditLog] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const { toast } = useToast();
 
   const handleNotify = () => {
@@ -92,6 +97,56 @@ const Team = ({ onLogout }: TeamProps) => {
     }, 1000);
   };
 
+  const handleProductSelected = (productId: string, productName: string) => {
+    const product = mockProducts.find(p => p.id === productId);
+    if (product) {
+      setCurrentProduct(product);
+      setShowScanner(false);
+      toast({
+        title: "Product selected",
+        description: `Selected: ${product.name}`,
+      });
+    }
+  };
+
+  const handleSendAlerts = () => {
+    if (!currentProduct) {
+      toast({
+        title: "No product selected",
+        description: "Please scan or select a product first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const waitingCount = mockOptIns.filter(
+      optIn => optIn.productId === currentProduct.id && !optIn.notified
+    ).length;
+
+    if (waitingCount === 0) {
+      toast({
+        title: "No subscribers",
+        description: `No one is waiting for ${currentProduct.name}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Send notifications
+    mockOptIns.forEach(optIn => {
+      if (optIn.productId === currentProduct.id && !optIn.notified) {
+        const message = `Heads up: ${currentProduct.name} is now available. Limited stock. Reply STOP to opt out.`;
+        sendSMS(optIn.phone, message, 'notification');
+        optIn.notified = true;
+      }
+    });
+
+    toast({
+      title: "Alerts sent successfully!",
+      description: `Notified ${waitingCount} subscriber${waitingCount === 1 ? '' : 's'}`,
+    });
+  };
+
   const filteredProducts = mockProducts.filter(product =>
     product.name.toLowerCase().includes(notifySearch.toLowerCase()) ||
     product.code.toLowerCase().includes(notifySearch.toLowerCase())
@@ -101,20 +156,72 @@ const Team = ({ onLogout }: TeamProps) => {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto w-full overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Team Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Team Dashboard</h1>
             <p className="text-muted-foreground">Manage back-in-stock notifications</p>
           </div>
-          <Button variant="outline" onClick={onLogout}>
-            Logout
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowScanner(true)} 
+              className="flex items-center gap-2"
+            >
+              <QrCode className="h-4 w-4" />
+              <span className="hidden sm:inline">Scan</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleSendAlerts}
+              disabled={!currentProduct}
+              className="flex items-center gap-2"
+            >
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline">Send Alerts</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowAuditLog(true)} 
+              className="flex items-center gap-2"
+            >
+              <History className="h-4 w-4" />
+              <span className="hidden sm:inline">Audit Log</span>
+            </Button>
+            <Button variant="outline" onClick={onLogout} className="w-full sm:w-auto">
+              Logout
+            </Button>
+          </div>
         </div>
 
+        {/* Current Product Status */}
+        {currentProduct && (
+          <Card className="mb-6 border-primary/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <Package className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Current Product</h3>
+                    <p className="text-sm text-muted-foreground">{currentProduct.name}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Waiting subscribers:</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {mockOptIns.filter(optIn => optIn.productId === currentProduct.id && !optIn.notified).length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Tabs defaultValue="notify" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 max-w-full">
             <TabsTrigger value="notify" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
               Send Notifications
@@ -210,7 +317,7 @@ const Team = ({ onLogout }: TeamProps) => {
                   Assign customer requests to existing products
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-hidden">
                 {pendingRequests.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -221,27 +328,33 @@ const Team = ({ onLogout }: TeamProps) => {
                     {pendingRequests.map((request) => (
                       <Card key={request.id} className="border-l-4 border-l-warning">
                         <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
+                          <div className="space-y-4">
                             <div className="space-y-2">
                               <h4 className="font-medium">"{request.productName}"</h4>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
                                 <span>Customer: {request.phone}</span>
-                                <span>•</span>
+                                <span className="hidden sm:inline">•</span>
                                 <span>{request.createdAt.toLocaleDateString()}</span>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              {mockProducts.map((product) => (
-                                <Button
-                                  key={product.id}
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleAssignRequest(request.id, product.id)}
-                                  disabled={isAssigning === request.id}
-                                >
-                                  {isAssigning === request.id ? "Assigning..." : `Assign to ${product.name}`}
-                                </Button>
-                              ))}
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-muted-foreground">Assign to product:</p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                                {mockProducts.map((product) => (
+                                  <Button
+                                    key={product.id}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleAssignRequest(request.id, product.id)}
+                                    disabled={isAssigning === request.id}
+                                    className="justify-start text-left h-auto py-2 px-3"
+                                  >
+                                    <span className="truncate">
+                                      {isAssigning === request.id ? "Assigning..." : product.name}
+                                    </span>
+                                  </Button>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </CardContent>
@@ -254,6 +367,27 @@ const Team = ({ onLogout }: TeamProps) => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Scanner Modal */}
+      {showScanner && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <ProductScanner 
+              onProductSelected={handleProductSelected}
+              onBack={() => setShowScanner(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Audit Log Modal */}
+      {showAuditLog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+            <AuditLog onBack={() => setShowAuditLog(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
