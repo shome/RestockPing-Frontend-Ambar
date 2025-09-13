@@ -17,6 +17,7 @@ import TeamDashboard from "@/components/TeamDashboard";
 import ProductScanner from "@/components/ProductScanner";
 import AuditLog from "@/components/AuditLog";
 import { useToast } from "@/hooks/use-toast";
+import { apiService } from "@/lib/api";
 
 type Page = 'home' | 'pin-login' | 'dashboard' | 'scanner' | 'audit-log';
 
@@ -140,20 +141,72 @@ const TeamManagement = ({ onLogout }: TeamManagementProps) => {
     }
   };
 
-  const handleSendAlerts = () => {
+  const handleAlertsSent = async () => {
+    // Go back to dashboard
+    setCurrentPage('dashboard');
+    
+    // Refresh the current product data if needed
+    // Note: In a real app, you might want to refresh product data here
+    toast({
+      title: "Alerts sent successfully!",
+      description: "Scanner closed and returned to dashboard.",
+    });
+  };
+
+  const handleSendAlerts = async (message?: string) => {
     if (!currentProduct) return;
     
-    // Add send alerts audit entry
-    addAuditEntry({
-      user: currentUser,
-      action: 'send_alerts',
-      details: 'Sent alerts to waiting subscribers',
-      subscriberCount: currentProduct.subscribers,
-      productName: currentProduct.name,
-      productId: currentProduct.id
-    });
-    
-    setLastSendTime(new Date());
+    try {
+      // Call the actual API to send alerts
+      const response = await apiService.sendAlerts({
+        labelId: currentProduct.id,
+        message: message || "🚨 Alert: Product is now available! Check our store for the latest stock."
+      });
+
+      if (response.success) {
+        // Add send alerts audit entry
+        addAuditEntry({
+          user: currentUser,
+          action: 'send_alerts',
+          details: `Sent alerts to ${response.sent_count} waiting subscribers`,
+          subscriberCount: response.sent_count,
+          productName: response.label_name,
+          productId: currentProduct.id
+        });
+        
+        setLastSendTime(new Date());
+        
+        toast({
+          title: "Alerts sent successfully!",
+          description: `Sent to ${response.sent_count} subscribers for ${response.label_name}`,
+        });
+      } else {
+        toast({
+          title: "Rate limit exceeded",
+          description: response.message || "This label was already sent an alert recently.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Send alerts error:', error);
+      
+      // Handle rate limiting (429 status)
+      if (error.response?.status === 429) {
+        const errorData = error.response.data;
+        toast({
+          title: "Rate limit exceeded",
+          description: errorData.message || "This label was already sent an alert recently.",
+          variant: "destructive",
+        });
+      } else {
+        const errorMessage = error.response?.data?.message || error.message || "Failed to send alerts";
+        toast({
+          title: "Error sending alerts",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const addAuditEntry = (entry: Omit<AuditEntry, 'id' | 'timestamp'>) => {
@@ -193,6 +246,7 @@ const TeamManagement = ({ onLogout }: TeamManagementProps) => {
           <ProductScanner
             onProductSelected={handleProductSelected}
             onBack={() => setCurrentPage('dashboard')}
+            onAlertsSent={handleAlertsSent}
           />
         );
       

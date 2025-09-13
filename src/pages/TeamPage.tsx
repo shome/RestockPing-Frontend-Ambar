@@ -1,55 +1,23 @@
-import { useState, useEffect } from "react";
-import TeamLogin from "@/components/TeamLogin";
-import Team from "@/pages/Team";
-import { isAuthenticated, redirectToTeamLogin } from "@/lib/auth";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { isAuthenticated } from "@/lib/auth";
 
 const TeamPage = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const navigate = useNavigate();
 
-  // Check authentication status on component mount
+  // Check authentication status on component mount and redirect accordingly
   useEffect(() => {
     if (isAuthenticated()) {
-      setIsLoggedIn(true);
+      // User is authenticated, redirect to dashboard
+      navigate('/team/dashboard');
     } else {
-      setIsLoggedIn(false);
+      // User is not authenticated, redirect to login
+      navigate('/team/login');
     }
-  }, []);
+  }, [navigate]);
 
-  // Set up token expiration checker
-  useEffect(() => {
-    const checkTokenExpiration = () => {
-      if (isLoggedIn && !isAuthenticated()) {
-        // Token expired, redirect to login
-        redirectToTeamLogin();
-      }
-    };
-
-    // Check every 30 seconds
-    const interval = setInterval(checkTokenExpiration, 30000);
-    
-    return () => clearInterval(interval);
-  }, [isLoggedIn]);
-
-  const handleLogin = (location: string) => {
-    setSelectedLocation(location);
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setSelectedLocation("");
-  };
-
-  return (
-    <>
-      {!isLoggedIn ? (
-        <TeamLogin onLogin={handleLogin} />
-      ) : (
-        <Team onLogout={handleLogout} />
-      )}
-    </>
-  );
+  // This component just handles routing, so return null
+  return null;
 };
 
 export default TeamPage;

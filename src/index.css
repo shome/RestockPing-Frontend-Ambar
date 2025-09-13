@@ -2,6 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom scrollbar styles */
+.modal-scrollbar {
+  scrollbar-width: auto;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+  overflow-y: scroll !important;
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  display: block;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  min-height: 20px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Force scrollbar to always be visible */
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+}
+
+/* Modal container styles */
+.modal-container {
+  overflow: visible !important;
+}
+
+.modal-content {
+  overflow: visible !important;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

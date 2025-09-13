@@ -366,11 +366,6 @@ const TeamLogin = ({ onLogin }: TeamLoginProps) => {
             </Button>
           </form>
           
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground text-center">
-              <strong>Note:</strong> PIN validation is handled by the server
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -80,5 +80,5 @@ export const getTimeUntilExpiry = (): number => {
  */
 export const redirectToTeamLogin = (): void => {
   clearToken();
-  window.location.href = '/team';
+  window.location.href = '/team/login';
 };

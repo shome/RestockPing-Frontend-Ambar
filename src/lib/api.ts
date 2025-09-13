@@ -83,6 +83,88 @@ export interface TeamLoginResponse {
   message?: string;
 }
 
+// Team Dashboard types
+export interface DashboardLabel {
+  id: string;
+  code: string;
+  name: string;
+  waitingCount: number;
+  lastSendTimestamp: string;
+}
+
+export interface DashboardMetrics {
+  activeVisitors: number;
+  pendingAlerts: number;
+  topLabels: DashboardLabel[];
+}
+
+export interface TeamDashboardResponse {
+  success: boolean;
+  metrics: DashboardMetrics;
+}
+
+// Scan API types
+export interface ScanPayload {
+  code: string;
+  method: "scan" | "manual";
+}
+
+export interface ScanLabel {
+  id: string;
+  code: string;
+  name: string;
+  synonyms: string;
+  location_id: string;
+  location_name: string;
+  active: boolean;
+}
+
+export interface ScanResponse {
+  success: boolean;
+  label: ScanLabel;
+  subscribers_count: number;
+  sent_count: number;
+  last_sent: string;
+  next_allowed: string;
+}
+
+// Send Alerts API types
+export interface SendAlertsPayload {
+  labelId: string;
+  message: string;
+}
+
+export interface SendAlertsResponse {
+  success: boolean;
+  sent_count: number;
+  total_subscribers: number;
+  label_name: string;
+  last_send_timestamp: string;
+  next_allowed_send: string;
+  message?: string; // For error messages
+}
+
+// Audit Log types
+export interface AuditLogEntry {
+  id: string;
+  date: string;
+  time: string;
+  user: string;
+  action: string;
+  details: string;
+  sent_count: number;
+  label_name: string;
+  full_timestamp: string;
+}
+
+export interface AuditLogResponse {
+  success: boolean;
+  logs: AuditLogEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 // Error types for better error handling
 export interface ApiError {
   message: string;
@@ -187,12 +269,17 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Unauthorized - token expired or invalid
       console.warn('Unauthorized access - redirecting to login');
-      // Import dynamically to avoid circular dependency
-      import('./auth').then(({ redirectToTeamLogin }) => {
-        redirectToTeamLogin();
-      });
+      // Only redirect to login for authenticated requests, not for login attempts
+      if (error.config?.url !== '/api/team/login') {
+        // Import dynamically to avoid circular dependency
+        import('./auth').then(({ redirectToTeamLogin }) => {
+          redirectToTeamLogin();
+        });
+      }
     } else if (error.response?.status === 404) {
       console.warn('Resource not found');
+    } else if (error.response?.status === 429) {
+      console.warn('Rate limit exceeded - too many requests');
     } else if (error.response?.status >= 500) {
       console.error('Server error occurred');
     }
@@ -307,6 +394,39 @@ export const apiService = {
   },
 
   /**
+   * Fetch team dashboard metrics
+   * @returns Promise with dashboard metrics data
+   */
+  fetchTeamDashboard: async (): Promise<TeamDashboardResponse> => {
+    try {
+      const response = await apiClient.get<TeamDashboardResponse>('/api/team/dashboard');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching team dashboard:', error);
+      // Transform the error to include user-friendly message
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Scan product by barcode or manual entry
+   * @param payload - Scan payload with code and method
+   * @returns Promise with scan result including product details
+   */
+  scanProduct: async (payload: ScanPayload): Promise<ScanResponse> => {
+    try {
+      const response = await apiClient.post<ScanResponse>('/api/team/scan', payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error scanning product:', error);
+      // Transform the error to include user-friendly message
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
    * Create a new request (existing or custom product)
    * @param payload - Request payload with all required data
    * @returns Promise with request creation result
@@ -372,6 +492,41 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error('Error creating request:', error);
+      // Transform the error to include user-friendly message
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Send alerts to all subscribers for a specific label
+   * @param payload - Send alerts payload with labelId and message
+   * @returns Promise with send result including counts and timestamps
+   */
+  sendAlerts: async (payload: SendAlertsPayload): Promise<SendAlertsResponse> => {
+    try {
+      const response = await apiClient.post<SendAlertsResponse>('/api/team/send', payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error sending alerts:', error);
+      // For send alerts, we want to preserve the API error response structure
+      // Don't transform the error, let the component handle the response
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch audit logs with pagination
+   * @param limit - Number of logs to fetch (default: 50)
+   * @param offset - Number of logs to skip (default: 0)
+   * @returns Promise with audit log response
+   */
+  fetchAuditLogs: async (limit: number = 50, offset: number = 0): Promise<AuditLogResponse> => {
+    try {
+      const response = await apiClient.get<AuditLogResponse>(`/api/team/logs?limit=${limit}&offset=${offset}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
       // Transform the error to include user-friendly message
       const apiError = ApiErrorHandler.getErrorDetails(error);
       throw new Error(apiError.message);
