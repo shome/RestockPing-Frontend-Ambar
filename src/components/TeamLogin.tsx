@@ -53,9 +53,9 @@ const TeamLogin = ({ onLogin }: TeamLoginProps) => {
       } else {
         throw new Error('Invalid response format');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching locations:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load locations. Please try again.';
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load locations. Please try again.';
       setLocationsError(errorMessage);
       toast({
         title: "Error",
@@ -347,7 +347,7 @@ const TeamLogin = ({ onLogin }: TeamLoginProps) => {
                     setErrors({ ...errors, pin: undefined });
                   }
                 }}
-                className={`text-center text-2xl tracking-widest ${errors.pin ? 'border-destructive' : ''}`}
+                className={`text-left text-2xl tracking-widest ${errors.pin ? 'border-destructive' : ''}`}
                 maxLength={4}
               />
               {errors.pin && (

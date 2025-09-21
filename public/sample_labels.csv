@@ -1,0 +1,11 @@
+code,name,synonyms,active
+IPH15,"iPhone 15 Pro","smartphone,phone,mobile,apple",true
+SGS24,"Samsung Galaxy S24","android,galaxy,samsung,phone",true
+MBPM3,"MacBook Pro M3","laptop,computer,macbook,apple",false
+APP2,"AirPods Pro 2","earbuds,headphones,airpods,audio",true
+IPAD5,"iPad Air 5","tablet,ipad,apple,portable",true
+WATCH9,"Apple Watch Series 9","watch,smartwatch,apple,wearable",false
+PS5,"PlayStation 5","gaming,console,playstation,sony",true
+XBOX,"Xbox Series X","gaming,console,xbox,microsoft",true
+NSWITCH,"Nintendo Switch","gaming,console,nintendo,portable",true
+MACBOOK,"MacBook Air M2","laptop,computer,macbook,apple",true
