@@ -7,6 +7,7 @@ export interface TokenData {
 
 const TOKEN_KEY = 'team_session_token';
 const EXPIRES_KEY = 'team_token_expires';
+const ADMIN_TOKEN_KEY = 'admin_token';
 
 /**
  * Store JWT token and expiration time
@@ -56,12 +57,35 @@ export const isAuthenticated = (): boolean => {
 };
 
 /**
+ * Check if admin is authenticated (has valid admin token)
+ */
+export const isAdminAuthenticated = (): boolean => {
+  const adminToken = localStorage.getItem(ADMIN_TOKEN_KEY);
+  return !!adminToken; // Admin tokens don't have expiration for now
+};
+
+/**
+ * Check if user is authenticated (team or admin)
+ */
+export const isAnyAuthenticated = (): boolean => {
+  return isAuthenticated() || isAdminAuthenticated();
+};
+
+/**
  * Clear stored token
  */
 export const clearToken = (): void => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(EXPIRES_KEY);
   console.log('Token cleared');
+};
+
+/**
+ * Clear admin token
+ */
+export const clearAdminToken = (): void => {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+  console.log('Admin token cleared');
 };
 
 /**

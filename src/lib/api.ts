@@ -165,6 +165,67 @@ export interface AuditLogResponse {
   offset: number;
 }
 
+// Label Management types
+export interface Label {
+  id: string;
+  code: string;
+  name: string;
+  synonyms: string;
+  active: boolean;
+  location_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LabelCreatePayload {
+  code: string;
+  name: string;
+  synonyms: string;
+  active: boolean;
+}
+
+export interface LabelUpdatePayload {
+  id: string;
+  code?: string;
+  name?: string;
+  synonyms?: string;
+  active?: boolean;
+}
+
+export interface LabelDeletePayload {
+  id: string;
+}
+
+export interface LabelResponse {
+  success: boolean;
+  label?: Label;
+  message?: string;
+}
+
+export interface LabelsListResponse {
+  success: boolean;
+  labels: Label[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface CSVUploadResponse {
+  success: boolean;
+  message: string;
+  processed: number;
+  created: number;
+  updated: number;
+  errors: string[];
+}
+
+export interface CSVValidationError {
+  row: number;
+  field: string;
+  message: string;
+  value: string;
+}
+
 // Error types for better error handling
 export interface ApiError {
   message: string;
@@ -528,6 +589,116 @@ export const apiService = {
     } catch (error) {
       console.error('Error fetching audit logs:', error);
       // Transform the error to include user-friendly message
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  // Label Management API functions
+  /**
+   * Fetch all labels with pagination
+   * @param limit - Number of labels to fetch (default: 50)
+   * @param offset - Number of labels to skip (default: 0)
+   * @param search - Optional search query
+   * @returns Promise with labels list response
+   */
+  fetchLabels: async (limit: number = 50, offset: number = 0, search?: string): Promise<LabelsListResponse> => {
+    try {
+      const params: any = { limit, offset };
+      if (search) params.search = search;
+      
+      const response = await apiClient.get<LabelsListResponse>('/api/labels', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching labels:', error);
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Create a new label
+   * @param payload - Label creation payload
+   * @returns Promise with label response
+   */
+  createLabel: async (payload: LabelCreatePayload): Promise<LabelResponse> => {
+    try {
+      const response = await apiClient.post<LabelResponse>('/api/labels', payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating label:', error);
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Update an existing label
+   * @param payload - Label update payload
+   * @returns Promise with label response
+   */
+  updateLabel: async (payload: LabelUpdatePayload): Promise<LabelResponse> => {
+    try {
+      const response = await apiClient.put<LabelResponse>(`/api/labels/${payload.id}`, payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating label:', error);
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Delete a label
+   * @param payload - Label delete payload
+   * @returns Promise with label response
+   */
+  deleteLabel: async (payload: LabelDeletePayload): Promise<LabelResponse> => {
+    try {
+      const response = await apiClient.delete<LabelResponse>(`/api/labels/${payload.id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting label:', error);
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Upload CSV file with labels
+   * @param file - CSV file to upload
+   * @returns Promise with CSV upload response
+   */
+  uploadLabelsCSV: async (file: File): Promise<CSVUploadResponse> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await apiClient.post<CSVUploadResponse>('/api/labels/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading CSV:', error);
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Download labels as CSV
+   * @returns Promise with CSV file blob
+   */
+  downloadLabelsCSV: async (): Promise<Blob> => {
+    try {
+      const response = await apiClient.get('/api/labels/export', {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error downloading CSV:', error);
       const apiError = ApiErrorHandler.getErrorDetails(error);
       throw new Error(apiError.message);
     }
