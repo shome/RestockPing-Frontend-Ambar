@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { isAuthenticated } from "@/lib/auth";
+import { useNavigate, useLocation } from "react-router-dom";
+import { isAuthenticated, isAdminAuthenticated } from "@/lib/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,20 +8,39 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
-      if (!isAuthenticated()) {
-        // Redirect to login if not authenticated
-        navigate('/team/login', { replace: true });
-        return;
+      const isAdminRoute = location.pathname.startsWith('/admin');
+      const isTeamRoute = location.pathname.startsWith('/team');
+      
+      if (isAdminRoute) {
+        // For admin routes, check admin authentication
+        if (!isAdminAuthenticated()) {
+          navigate('/admin/login', { replace: true });
+          return;
+        }
+      } else if (isTeamRoute) {
+        // For team routes, check team authentication
+        if (!isAuthenticated()) {
+          navigate('/team/login', { replace: true });
+          return;
+        }
+      } else {
+        // For other routes, check if any authentication exists
+        if (!isAuthenticated() && !isAdminAuthenticated()) {
+          navigate('/team/login', { replace: true });
+          return;
+        }
       }
+      
       setIsAuthChecked(true);
     };
 
     checkAuth();
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   // Show loading while checking authentication
   if (!isAuthChecked) {

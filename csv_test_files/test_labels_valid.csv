@@ -1,0 +1,11 @@
+name,code,description,active
+"Smartphones","PHONE","Mobile phones and accessories",true
+"Laptops","LAPTOP","Portable computers and accessories",true
+"Headphones","HEADPHONE","Audio devices and accessories",true
+"Gaming","GAMING","Gaming equipment and accessories",false
+"Cameras","CAMERA","Photography equipment",true
+"Monitors","MONITOR","Display screens and monitors",true
+"Tablets","TABLET","Tablet computers and accessories",true
+"Smartwatches","WATCH","Wearable smart devices",false
+"Televisions","TV","TVs and home entertainment",true
+"Drones","DRONE","Unmanned aerial vehicles",true

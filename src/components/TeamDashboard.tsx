@@ -13,7 +13,8 @@ import {
   History,
   RefreshCw,
   Bell,
-  AlertCircle
+  AlertCircle,
+  Tag
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,6 +56,7 @@ interface TeamDashboardProps {
   onLogout: () => void;
   onScan: () => void;
   onAuditLog: () => void;
+  onLabelsManagement: () => void;
   onSendAlerts: (message?: string) => void | Promise<void>;
   currentLabel?: string;
   subscriberCount?: number;
@@ -71,6 +73,7 @@ const TeamDashboard = ({
   onLogout, 
   onScan, 
   onAuditLog,
+  onLabelsManagement,
   onSendAlerts,
   currentLabel = "No product selected",
   subscriberCount = 0,
@@ -159,6 +162,10 @@ const TeamDashboard = ({
               </>
             ) : (
               <>
+                <Button variant="outline" onClick={onLabelsManagement} className="flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  <span className="hidden sm:inline">Labels</span>
+                </Button>
                 <Button variant="outline" onClick={onAuditLog} className="flex items-center gap-2">
                   <History className="h-4 w-4" />
                   <span className="hidden sm:inline">Audit Log</span>
@@ -577,6 +584,15 @@ const TeamDashboard = ({
               >
                 <Send className="h-5 w-5 sm:h-6 sm:w-6" />
                 <span className="text-xs sm:text-sm">Send Alerts</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={onLabelsManagement}
+                className="flex flex-col items-center gap-2 h-auto py-4 touch-manipulation"
+              >
+                <Tag className="h-5 w-5 sm:h-6 sm:w-6" />
+                <span className="text-xs sm:text-sm">Manage Labels</span>
               </Button>
               
               <Button 

@@ -16,10 +16,11 @@ import PinLogin from "@/components/PinLogin";
 import TeamDashboard from "@/components/TeamDashboard";
 import ProductScanner from "@/components/ProductScanner";
 import AuditLog from "@/components/AuditLog";
+import LabelsManagement from "@/pages/LabelsManagement";
 import { useToast } from "@/hooks/use-toast";
 import { apiService } from "@/lib/api";
 
-type Page = 'home' | 'pin-login' | 'dashboard' | 'scanner' | 'audit-log';
+type Page = 'home' | 'pin-login' | 'dashboard' | 'scanner' | 'audit-log' | 'labels';
 
 interface TeamManagementProps {
   onLogout: () => void;
@@ -153,6 +154,10 @@ const TeamManagement = ({ onLogout }: TeamManagementProps) => {
     });
   };
 
+  const handleLabelsManagement = () => {
+    setCurrentPage('labels');
+  };
+
   const handleSendAlerts = async (message?: string) => {
     if (!currentProduct) return;
     
@@ -234,6 +239,7 @@ const TeamManagement = ({ onLogout }: TeamManagementProps) => {
             onLogout={handleLogout}
             onScan={() => setCurrentPage('scanner')}
             onAuditLog={() => setCurrentPage('audit-log')}
+            onLabelsManagement={handleLabelsManagement}
             onSendAlerts={handleSendAlerts}
             currentLabel={currentProduct?.name || "No product selected"}
             subscriberCount={currentProduct?.subscribers || 0}
@@ -253,6 +259,13 @@ const TeamManagement = ({ onLogout }: TeamManagementProps) => {
       case 'audit-log':
         return (
           <AuditLog
+            onBack={() => setCurrentPage('dashboard')}
+          />
+        );
+      
+      case 'labels':
+        return (
+          <LabelsManagement
             onBack={() => setCurrentPage('dashboard')}
           />
         );
@@ -404,14 +417,6 @@ const TeamManagement = ({ onLogout }: TeamManagementProps) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div>
-                <p className="font-medium mb-2">Demo PINs:</p>
-                <div className="flex gap-2 flex-wrap">
-                  <Badge variant="outline">1234 - John Doe</Badge>
-                  <Badge variant="outline">5678 - Jane Smith</Badge>
-                  <Badge variant="outline">9999 - Mike Johnson</Badge>
-                </div>
-              </div>
               <div>
                 <p className="font-medium mb-2">Available Locations:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">

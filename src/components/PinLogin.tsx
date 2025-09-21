@@ -261,12 +261,6 @@ const PinLogin = ({ onLogin, onBack }: PinLoginProps) => {
           </CardContent>
         </Card>
 
-        {/* Demo PINs */}
-        <div className="mt-4 text-center">
-          <p className="text-xs text-muted-foreground">
-            Demo PINs: 1234, 5678, 9999
-          </p>
-        </div>
       </div>
     </div>
   );
