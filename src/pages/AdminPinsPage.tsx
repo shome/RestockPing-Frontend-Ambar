@@ -7,12 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   Key, 
   Users, 
   Plus,
   RefreshCw,
-  Loader2
+  Loader2,
+  RotateCcw,
+  Ban,
+  MoreHorizontal
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -133,6 +137,64 @@ const AdminPinsPage: React.FC = () => {
       const errorMessage = error.response?.data?.message || error.message || "Failed to create team PIN";
       toast({
         title: "Error creating team PIN",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRotatePin = async (pinId: string, currentPin: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Call API to rotate PIN
+      const response = await adminApiService.rotateTeamPin(pinId);
+      
+      if (response.success) {
+        toast({
+          title: "PIN rotated",
+          description: `PIN changed from ${currentPin} to ${response.pin}`,
+        });
+        
+        // Refresh pins data
+        fetchPins();
+      }
+    } catch (error: any) {
+      console.error('Error rotating PIN:', error);
+      const errorMessage = error.response?.data?.message || error.message || "Failed to rotate PIN";
+      toast({
+        title: "Error rotating PIN",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDisablePin = async (pinId: string, pinValue: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Call API to disable PIN
+      const response = await adminApiService.disableTeamPin(pinId);
+      
+      if (response.success) {
+        toast({
+          title: "PIN disabled",
+          description: `PIN ${pinValue} has been disabled`,
+        });
+        
+        // Refresh pins data
+        fetchPins();
+      }
+    } catch (error: any) {
+      console.error('Error disabling PIN:', error);
+      const errorMessage = error.response?.data?.message || error.message || "Failed to disable PIN";
+      toast({
+        title: "Error disabling PIN",
         description: errorMessage,
         variant: "destructive",
       });
@@ -343,6 +405,30 @@ const AdminPinsPage: React.FC = () => {
                             <Badge variant={expiryStatus.badge}>
                               {expiryStatus.status}
                             </Badge>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => handleRotatePin(pin.id, pin.pin)}
+                                  disabled={!pin.active}
+                                >
+                                  <RotateCcw className="h-4 w-4 mr-2" />
+                                  Rotate PIN
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDisablePin(pin.id, pin.pin)}
+                                  disabled={!pin.active}
+                                  className="text-destructive"
+                                >
+                                  <Ban className="h-4 w-4 mr-2" />
+                                  Disable PIN
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       );

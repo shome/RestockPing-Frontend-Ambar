@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import OptIn from "./pages/OptIn";
+import HomePage from "./pages/HomePage";
 import TeamPage from "./pages/TeamPage";
 import TeamLoginPage from "./pages/TeamLoginPage";
 import TeamDashboardPage from "./pages/TeamDashboardPage";
@@ -28,7 +29,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<OptIn />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/optin" element={<OptIn />} />
           <Route path="/index" element={<Index />} />
           <Route path="/team" element={<TeamPage />} />

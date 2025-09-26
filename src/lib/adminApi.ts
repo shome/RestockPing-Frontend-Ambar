@@ -590,6 +590,34 @@ export const adminApiService = {
   },
 
   /**
+   * Rotate team PIN
+   */
+  rotateTeamPin: async (pinId: string, newPin?: string): Promise<AdminTeamPinResponse> => {
+    try {
+      const response = await adminApiClient.patch<AdminTeamPinResponse>(`/api/admin/pins/${pinId}/rotate`, {
+        newPin,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error rotating team PIN:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Disable team PIN
+   */
+  disableTeamPin: async (pinId: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await adminApiClient.patch<{ success: boolean; message?: string }>(`/api/admin/pins/${pinId}/disable`);
+      return response.data;
+    } catch (error) {
+      console.error('Error disabling team PIN:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Health check
    */
   healthCheck: async (): Promise<HealthCheckResponse> => {

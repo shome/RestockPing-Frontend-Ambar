@@ -1,3 +1,6 @@
+// Import the comprehensive maskPhone function from utils
+import { maskPhone } from './utils';
+
 export interface Product {
   id: string;
   name: string;
@@ -82,11 +85,6 @@ export let mockRequests: Request[] = [
 ];
 
 export let mockSMSMessages: SMSMessage[] = [];
-
-export const maskPhone = (phone: string): string => {
-  if (phone.length < 4) return phone;
-  return '***-***-' + phone.slice(-4);
-};
 
 export const sendSMS = (phone: string, message: string, type: SMSMessage['type']) => {
   const sms: SMSMessage = {

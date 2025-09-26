@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Location {
+  id       String @id @default(cuid())
+  name     String
+  slug     String @unique
+  timezone String
+  
+  labels    Label[]
+  teamPins  TeamPin[]
+  requests  Request[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("locations")
+}
+
+model Label {
+  id          String  @id @default(cuid())
+  code        String
+  name        String
+  synonyms    String  @default("")
+  active      Boolean @default(true)
+  locationId  String
+  
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  requests    Request[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([code, locationId])
+  @@map("labels")
+}
+
+model TeamPin {
+  id         String   @id @default(cuid())
+  pin        String
+  status     String   @default("ACTIVE") // ACTIVE, DISABLED
+  locationId String
+  
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@unique([pin, locationId])
+  @@map("team_pins")
+}
+
+model Request {
+  id          String   @id @default(cuid())
+  phone       String
+  labelName   String?
+  labelId     String?
+  imageUrl    String?
+  status      String   @default("PENDING") // PENDING, MAPPED, COMPLETED, CANCELLED
+  locationId  String
+  
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  label       Label?   @relation(fields: [labelId], references: [id], onDelete: SetNull)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("requests")
+}
+
+model SmsLog {
+  id          String    @id @default(cuid())
+  phone       String
+  message     String
+  status      String    @default("PENDING") // PENDING, SENT, FAILED, DELIVERED
+  errorMessage String?
+  twilioSid   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("sms_logs")
+}
+
+model WebhookLog {
+  id          String   @id @default(cuid())
+  source      String   // 'twilio' or 'unknown'
+  payload     String   // JSON as string for SQLite
+  status      String   @default("RECEIVED") // RECEIVED, PROCESSED, INVALID, ERROR
+  errorMessage String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("webhook_logs")
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  action      String
+  userId      String?
+  details     String    // JSON as string for SQLite
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("audit_logs")
+}
