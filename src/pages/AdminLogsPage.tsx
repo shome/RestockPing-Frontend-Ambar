@@ -16,11 +16,16 @@ import {
   Calendar,
   Clock,
   User,
-  MapPin
+  MapPin,
+  Phone,
+  XCircle,
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { adminApiService, AdminLogsResponse, AdminAlertsResponse, AdminRequestsResponse } from '@/lib/adminApi';
+import { maskPhoneNumber } from '@/lib/phoneUtils';
 import AdminNavigation from '@/components/AdminNavigation';
 
 const AdminLogsPage: React.FC = () => {
@@ -69,26 +74,46 @@ const AdminLogsPage: React.FC = () => {
       // Provide mock data fallback for development
       const mockLogsData = {
         success: true,
-        sends: [
-          {
-            id: "mock-send-1",
-            label_name: "Laptops",
-            sent_at: new Date().toISOString(),
-            count_sent: 2,
-            sender: "mock-sender-1",
-            location_name: "London Office"
-          }
-        ],
-        requests: [
-          {
-            id: "mock-request-1",
-            text: "Sample product request",
-            created_at: new Date().toISOString(),
-            status: "open",
-            location_name: "London Office"
-          }
-        ],
-        total_sends: 1,
+        logs: {
+          sends: [
+            {
+              id: "mock-send-1",
+              label_name: "Laptops",
+              sent_at: new Date().toISOString(),
+              count_sent: 2,
+              sender: "mock-sender-1",
+              location_name: "London Office",
+              status: "success" as const,
+              phone_numbers: ["+1234567890", "+0987654321"]
+            },
+            {
+              id: "mock-send-2",
+              label_name: "Smartphones",
+              sent_at: new Date(Date.now() - 3600000).toISOString(),
+              count_sent: 0,
+              sender: "System",
+              location_name: "Paris Office",
+              status: "failed" as const,
+              error_message: "Failed to send SMS to +123456789 - Invalid phone number",
+              phone_numbers: ["+123456789"]
+            }
+          ],
+          requests: [
+            {
+              id: "mock-request-1",
+              text: "Sample product request",
+              image_url: "",
+              created_at: new Date().toISOString(),
+              status: "open",
+              location_name: "London Office",
+              matched_label_name: null,
+              phone_number: "+1234567890",
+              webhook_valid: true,
+              webhook_source: "twilio"
+            }
+          ]
+        },
+        total_sends: 2,
         total_requests: 1,
         message: "Mock data - API unavailable"
       };
@@ -318,7 +343,7 @@ const AdminLogsPage: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {(logsData?.sends?.length || 0) + (logsData?.requests?.length || 0)}
+                        {(logsData?.logs?.sends?.length || 0) + (logsData?.logs?.requests?.length || 0)}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Items in current view
@@ -341,9 +366,12 @@ const AdminLogsPage: React.FC = () => {
                         <TableRow>
                           <TableHead>Label</TableHead>
                           <TableHead>Sent At</TableHead>
+                          <TableHead>Status</TableHead>
                           <TableHead>Count Sent</TableHead>
+                          <TableHead>Phone Numbers</TableHead>
                           <TableHead>Sender</TableHead>
                           <TableHead>Location</TableHead>
+                          <TableHead>Error</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -353,13 +381,16 @@ const AdminLogsPage: React.FC = () => {
                             <TableRow key={`skeleton-send-${i}`}>
                               <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                               <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                              <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
                               <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                               <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                              <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                               <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                              <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                             </TableRow>
                           ))
                         ) : (
-                          (logsData?.sends || []).map((send) => (
+                          (logsData?.logs?.sends || []).map((send) => (
                           <TableRow key={send.id}>
                             <TableCell className="font-medium">
                               {send.label_name}
@@ -371,18 +402,56 @@ const AdminLogsPage: React.FC = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline">
-                                {send.count_sent} subscribers
+                              <Badge variant={send.status === 'success' ? 'default' : send.status === 'failed' ? 'destructive' : 'secondary'}>
+                                {send.status === 'success' && <CheckCircle className="h-3 w-3 mr-1" />}
+                                {send.status === 'failed' && <XCircle className="h-3 w-3 mr-1" />}
+                                {send.status === 'pending' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                                {send.status || 'Unknown'}
                               </Badge>
                             </TableCell>
-                            <TableCell className="font-mono text-sm">
-                              {send.sender}
+                            <TableCell className="text-center">
+                              {send.count_sent}
+                            </TableCell>
+                            <TableCell>
+                              {send.phone_numbers && send.phone_numbers.length > 0 ? (
+                                <div className="space-y-1">
+                                  {send.phone_numbers.slice(0, 2).map((phone, index) => (
+                                    <div key={index} className="font-mono text-xs">
+                                      {maskPhoneNumber(phone)}
+                                    </div>
+                                  ))}
+                                  {send.phone_numbers.length > 2 && (
+                                    <div className="text-xs text-muted-foreground">
+                                      +{send.phone_numbers.length - 2} more
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">No phones</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                {send.sender}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <MapPin className="h-4 w-4 text-muted-foreground" />
                                 {send.location_name}
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              {send.error_message ? (
+                                <div className="max-w-xs">
+                                  <p className="text-xs text-red-600 truncate" title={send.error_message}>
+                                    {send.error_message}
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">-</span>
+                              )}
                             </TableCell>
                           </TableRow>
                           ))
@@ -424,7 +493,7 @@ const AdminLogsPage: React.FC = () => {
                             </TableRow>
                           ))
                         ) : (
-                          (logsData?.requests || []).map((request) => (
+                          (logsData?.logs?.requests || []).map((request) => (
                           <TableRow key={request.id}>
                             <TableCell>
                               <div className="max-w-xs">
