@@ -134,6 +134,15 @@ export interface AdminLabel {
   subscribers_count: number;
   total_sends: number;
   last_sent: string;
+  subscriber_phone_numbers?: string[];
+}
+
+export interface AdminLabelEntry {
+  id: string;
+  name: string;
+  code: string;
+  subscribers_count?: number;
+  subscriber_phone_numbers?: string[];
 }
 
 export interface AdminLabelsResponse {
@@ -180,6 +189,10 @@ export interface AdminLogEntry {
   count_sent: number;
   sender: string;
   location_name: string;
+  status?: 'success' | 'failed' | 'pending';
+  error_message?: string;
+  phone_numbers?: string[];
+  sms_provider_response?: string;
 }
 
 export interface AdminRequestEntry {
@@ -191,6 +204,10 @@ export interface AdminRequestEntry {
   location_name: string;
   matched_label_name: string | null;
   is_cant_find?: boolean;
+  phone_number?: string;
+  webhook_source?: string;
+  webhook_valid?: boolean;
+  webhook_error?: string;
 }
 
 export interface AdminLogsResponse {
@@ -585,6 +602,34 @@ export const adminApiService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching admin locations:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Rotate team PIN
+   */
+  rotateTeamPin: async (pinId: string, newPin?: string): Promise<AdminTeamPinResponse> => {
+    try {
+      const response = await adminApiClient.patch<AdminTeamPinResponse>(`/api/admin/pins/${pinId}/rotate`, {
+        newPin,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error rotating team PIN:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Disable team PIN
+   */
+  disableTeamPin: async (pinId: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await adminApiClient.patch<{ success: boolean; message?: string }>(`/api/admin/pins/${pinId}/disable`);
+      return response.data;
+    } catch (error) {
+      console.error('Error disabling team PIN:', error);
       throw error;
     }
   },

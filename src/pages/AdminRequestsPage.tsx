@@ -25,6 +25,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { adminApiService, AdminRequestsResponse, AdminRequestEntry, AdminRequestMapPayload, AdminLabelEntry } from '@/lib/adminApi';
+import { maskPhoneNumber } from '@/lib/phoneUtils';
 import AdminNavigation from '@/components/AdminNavigation';
 
 const AdminRequestsPage: React.FC = () => {
@@ -480,11 +481,13 @@ const AdminRequestsPage: React.FC = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Request Text</TableHead>
+                      <TableHead>Phone Number</TableHead>
                       <TableHead>Created At</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Matched Label</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead>Type</TableHead>
+                      <TableHead>Webhook</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -501,6 +504,15 @@ const AdminRequestsPage: React.FC = () => {
                               </div>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {request.phone_number ? (
+                            <div className="font-mono text-sm">
+                              {maskPhoneNumber(request.phone_number)}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">No phone</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -539,6 +551,28 @@ const AdminRequestsPage: React.FC = () => {
                           >
                             {request.is_cant_find ? "Can't Find" : "Regular"}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            {request.webhook_valid !== undefined && (
+                              <Badge 
+                                variant={request.webhook_valid ? "default" : "destructive"}
+                                className="text-xs"
+                              >
+                                {request.webhook_valid ? "Valid" : "Invalid"}
+                              </Badge>
+                            )}
+                            {request.webhook_source && (
+                              <div className="text-xs text-muted-foreground">
+                                {request.webhook_source}
+                              </div>
+                            )}
+                            {request.webhook_error && (
+                              <div className="text-xs text-red-600 max-w-32 truncate" title={request.webhook_error}>
+                                {request.webhook_error}
+                              </div>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           {request.status !== 'mapped' && (
