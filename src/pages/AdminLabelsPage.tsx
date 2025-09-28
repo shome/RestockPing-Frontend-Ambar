@@ -28,7 +28,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Skeleton } from '@/components/ui/skeleton';
 import { adminApiService, AdminLabel, AdminLabelsResponse, AdminLabelUpdatePayload, AdminCSVImportResponse } from '@/lib/adminApi';
-import { maskPhoneNumber } from '@/lib/phoneUtils';
 import AdminNavigation from '@/components/AdminNavigation';
 
 const AdminLabelsPage: React.FC = () => {
@@ -521,7 +520,6 @@ const AdminLabelsPage: React.FC = () => {
                       <TableHead>Location</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Subscribers</TableHead>
-                      <TableHead>Phone Numbers</TableHead>
                       <TableHead>Total Sends</TableHead>
                       <TableHead>Last Sent</TableHead>
                       <TableHead>Actions</TableHead>
@@ -553,24 +551,6 @@ const AdminLabelsPage: React.FC = () => {
                         </TableCell>
                         <TableCell className="text-center text-foreground">
                           {label.subscribers_count}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {label.subscriber_phone_numbers && label.subscriber_phone_numbers.length > 0 ? (
-                            <div className="space-y-1">
-                              {label.subscriber_phone_numbers.slice(0, 3).map((phone, index) => (
-                                <div key={index} className="font-mono text-xs">
-                                  {maskPhoneNumber(phone)}
-                                </div>
-                              ))}
-                              {label.subscriber_phone_numbers.length > 3 && (
-                                <div className="text-xs text-muted-foreground">
-                                  +{label.subscriber_phone_numbers.length - 3} more
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">No subscribers</span>
-                          )}
                         </TableCell>
                         <TableCell className="text-center text-foreground">
                           {label.total_sends}

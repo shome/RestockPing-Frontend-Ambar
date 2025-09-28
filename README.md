@@ -1,24 +1,17 @@
-# RestockPing - Complete Inventory Management System
+# RestockPing Frontend
 
-A full-stack inventory management system with React frontend and Node.js backend, featuring team PIN management, SMS notifications, and comprehensive admin controls.
+A modern, responsive React application for smart inventory management with a beautiful landing page showcasing the platform's features.
 
 ## 🚀 Features
 
-### Frontend Features
 - **Modern React 18** with TypeScript
-- **Responsive Design** - Mobile-first approach with Tailwind CSS + ShadCN UI
+- **Responsive Design** - Mobile-first approach
+- **SCSS Styling** - Organized with variables, mixins, and nesting
+- **Smooth Animations** - CSS animations and transitions
 - **Component-Based Architecture** - Modular and maintainable code
-- **Real-time API Integration** - Product search with debouncing
-- **Multi-level Authentication** - Customer, Team, and Admin access levels
-- **Phone Number Masking** - Privacy protection for sensitive data
-
-### Backend Features
-- **Team PIN Management** - Create, rotate, and disable PINs with database persistence
-- **SMS Integration** - Twilio-powered SMS with comprehensive error handling and logging
-- **Webhook Processing** - Secure webhook handling with validation and logging
-- **Database Logging** - Complete audit trail for SMS and webhook activities
-- **Error Handling** - Robust error handling with detailed logging
-- **RESTful API** - Well-structured API endpoints with authentication
+- **Cross-Browser Compatible** - Works on all modern browsers
+- **API Integration** - Real-time product search with debouncing
+- **Environment Configuration** - Flexible API endpoint configuration
 
 ## 🎨 Landing Page Sections
 
@@ -29,21 +22,12 @@ A full-stack inventory management system with React frontend and Node.js backend
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- **Framework**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS + ShadCN UI components
-- **State Management**: TanStack Query for API management
-- **Routing**: React Router
-- **Forms**: React Hook Form + Zod validation
-
-### Backend
-- **Runtime**: Node.js + Express
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: JWT tokens
-- **SMS Provider**: Twilio API
-- **Logging**: Winston
-- **Validation**: Zod schemas
+- **Frontend Framework**: React 18.2.0
+- **Language**: TypeScript 4.9.5
+- **Styling**: SCSS with CSS modules support
+- **Build Tool**: Create React App 5.0.1
+- **Package Manager**: npm
+- **Node.js**: v22.17.0+
 
 ## 📋 Prerequisites
 
@@ -51,8 +35,6 @@ Before running this project, make sure you have:
 
 - **Node.js** (v18.0.0 or higher)
 - **npm** (v8.0.0 or higher)
-- **PostgreSQL** (v13.0 or higher)
-- **Twilio Account** (for SMS functionality)
 
 ## 🚀 Getting Started
 
@@ -60,133 +42,22 @@ Before running this project, make sure you have:
 
 ```bash
 git clone <your-repository-url>
-cd RestockPing-Frontend-Ambar-main
+cd RestockPing-Frontend
 ```
 
-### 2. Backend Setup
+### 2. Install Dependencies
 
-#### Install Backend Dependencies
 ```bash
-cd backend
 npm install
 ```
 
-#### Database Setup
+### 3. Environment Configuration
+
+Create a `.env` file in the root directory (copy from `.env.example`):
+
 ```bash
-# Copy environment file
 cp .env.example .env
-
-# Edit .env with your database credentials and Twilio settings
-# DATABASE_URL="postgresql://username:password@localhost:5432/restockping"
-# TWILIO_ACCOUNT_SID="your-twilio-account-sid"
-# TWILIO_AUTH_TOKEN="your-twilio-auth-token"
-# TWILIO_PHONE_NUMBER="your-twilio-phone-number"
-
-# Generate Prisma client
-npm run db:generate
-
-# Push database schema
-npm run db:push
 ```
-
-#### Start Backend Server
-```bash
-npm run dev
-# Backend will run on http://localhost:3000
-```
-
-### 3. Frontend Setup
-
-#### Install Frontend Dependencies
-```bash
-cd .. # Go back to root directory
-npm install
-```
-
-#### Configure Environment
-```bash
-# Copy environment file
-cp .env.example .env
-
-# Edit .env if needed (default should work for local development)
-# VITE_API_BASE_URL=http://localhost:3000
-```
-
-#### Start Frontend Development Server
-```bash
-npm run dev
-# Frontend will run on http://localhost:5173
-```
-
-## 🔧 API Endpoints
-
-### Admin Endpoints
-- `POST /api/admin/login` - Admin authentication
-- `GET /api/admin/pins` - Get all team PINs
-- `POST /api/admin/team-pins` - Create new team PIN
-- `PATCH /api/admin/pins/:id/rotate` - Rotate team PIN
-- `PATCH /api/admin/pins/:id/disable` - Disable team PIN
-- `GET /api/admin/sms-logs` - View SMS logs
-
-### Team Endpoints
-- `POST /api/team/login` - Team login with PIN
-- `GET /api/team/dashboard` - Team dashboard data
-- `POST /api/team/scan` - Scan product
-- `POST /api/team/send` - Send alerts to subscribers
-
-### Public Endpoints
-- `GET /api/locations` - Get all locations
-- `GET /api/labels` - Search labels
-- `POST /api/requests` - Create customer request
-
-## 🧪 Testing
-
-### Run Frontend Tests
-```bash
-npm test
-```
-
-### Run Backend Tests
-```bash
-cd backend
-npm test
-```
-
-## 🚀 Default Credentials
-
-### Admin Login
-- **Username**: `admin`
-- **Password**: `admin123`
-
-### Sample Team PINs
-Team PINs can be created through the Admin dashboard after logging in.
-
-## 📱 Features Overview
-
-### Customer Flow
-1. Search for products
-2. Submit requests with phone number
-3. Receive SMS notifications when available
-
-### Team Dashboard
-1. Login with location-specific PIN
-2. Scan products (barcode/manual)
-3. Send alerts to subscribers
-4. View audit logs
-
-### Admin Panel
-1. Manage team PINs (create/rotate/disable)
-2. View all requests and labels
-3. Monitor SMS logs and system health
-4. Import/export data via CSV
-
-## 🔒 Security Features
-
-- **PIN-based Authentication**: Location-specific team access
-- **Phone Number Masking**: Privacy protection in admin views
-- **JWT Tokens**: Secure API authentication
-- **Input Validation**: Zod schemas for all endpoints
-- **Error Logging**: Comprehensive audit trails
 
 Configure your environment variables:
 

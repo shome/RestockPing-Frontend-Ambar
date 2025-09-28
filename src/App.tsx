@@ -28,7 +28,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<OptIn />} />
           <Route path="/optin" element={<OptIn />} />
           <Route path="/index" element={<Index />} />
           <Route path="/team" element={<TeamPage />} />
@@ -44,7 +44,9 @@ const App = () => (
           <Route 
             path="/team/labels" 
             element={
-              <LabelsManagement onBack={() => window.history.back()} />
+              // <ProtectedRoute>
+                <LabelsManagement onBack={() => window.history.back()} />
+              // </ProtectedRoute>S
             } 
           />
           <Route path="/team-management" element={<TeamManagement onLogout={() => window.location.href = '/'} />} />
