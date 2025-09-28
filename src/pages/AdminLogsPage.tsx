@@ -426,50 +426,39 @@ const AdminLogsPage: React.FC = () => {
                           ))
                         ) : (
                           (logsData?.requests || []).map((request) => (
-                          <div className="space-y-4">
-                            {logsData.sends.map((send) => (
-                            <div key={send.id} className="flex items-center justify-between p-4 border rounded-lg">
-                              <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                  <Send className="h-5 w-5 text-green-600" />
+                            <TableRow key={request.id}>
+                              <TableCell>
+                                <div className="max-w-xs">
+                                  <p className="truncate">{request.text}</p>
                                 </div>
-                                <div>
-                                  <p className="font-medium">{send.label_name}</p>
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                      <User className="h-3 w-3" />
-                                      <span>{send.sender}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
-                                      <span>{send.location_name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 font-mono text-xs">
-                                      <span>Sample:</span>
-                                      <span>{maskPhoneNumber('+14151234567')}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="text-right">
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex items-center gap-2">
-                                  <Badge variant="default" className="bg-green-100 text-green-800">
-                                    {send.count_sent} sent
-                                  </Badge>
+                                  <Clock className="h-4 w-4 text-muted-foreground" />
+                                  {formatDate(request.created_at)}
                                 </div>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {formatDate(send.sent_at)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div> className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                {request.location_name}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-{{ ... }}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={getStatusColor(request.status) === 'text-green-600' ? 'default' : 'secondary'}>
+                                  {request.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {request.matched_label_name ? (
+                                  <Badge variant="outline">
+                                    {request.matched_label_name}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground">Not mapped</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  {request.location_name}
+                                </div>
+                              </TableCell>
+                            </TableRow>
                           ))
                         )}
                       </TableBody>
