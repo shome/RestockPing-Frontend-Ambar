@@ -25,6 +25,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { adminApiService, AdminRequestsResponse, AdminRequestEntry, AdminRequestMapPayload, AdminLabelEntry } from '@/lib/adminApi';
+import { maskPhoneNumber } from '@/lib/phoneUtils';
 import AdminNavigation from '@/components/AdminNavigation';
 
 const AdminRequestsPage: React.FC = () => {
@@ -480,6 +481,7 @@ const AdminRequestsPage: React.FC = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Request Text</TableHead>
+                      <TableHead>Customer Phone</TableHead>
                       <TableHead>Created At</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Matched Label</TableHead>
@@ -501,6 +503,10 @@ const AdminRequestsPage: React.FC = () => {
                               </div>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground font-mono">
+                          {/* Demo phone number masking - in real app this would come from API */}
+                          {maskPhoneNumber('+14151234567')}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">

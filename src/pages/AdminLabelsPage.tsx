@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Skeleton } from '@/components/ui/skeleton';
 import { adminApiService, AdminLabel, AdminLabelsResponse, AdminLabelUpdatePayload, AdminCSVImportResponse } from '@/lib/adminApi';
+import { maskPhoneNumber } from '@/lib/phoneUtils';
 import AdminNavigation from '@/components/AdminNavigation';
 
 const AdminLabelsPage: React.FC = () => {
@@ -522,6 +523,7 @@ const AdminLabelsPage: React.FC = () => {
                       <TableHead>Subscribers</TableHead>
                       <TableHead>Total Sends</TableHead>
                       <TableHead>Last Sent</TableHead>
+                      <TableHead>Sample Subscriber</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -557,6 +559,10 @@ const AdminLabelsPage: React.FC = () => {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {label.last_sent ? formatDate(label.last_sent) : 'Never'}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground font-mono">
+                          {/* Demo phone number masking - in real app this would come from API */}
+                          {label.subscribers_count > 0 ? maskPhoneNumber('+14151234567') : 'No subscribers'}
                         </TableCell>
                         <TableCell>
                           <Button
