@@ -230,9 +230,10 @@ export interface AdminRequestMapResponse {
 }
 
 export interface AdminTeamPinCreatePayload {
-  pin?: string;
-  locationId: string;
-  expireAt: string;
+  pin: string;  // Required 4-digit string
+  locationId: string;  // UUID
+  expireAt: string;  // ISO date string
+  token: string;  // JWT token for authorization
 }
 
 export interface AdminTeamPinResponse {
@@ -536,14 +537,54 @@ export const adminApiService = {
 
   /**
    * Create team PIN
+   * @param payload - Must include:
+   *   - pin: 4 digits as string
+   *   - locationId: UUID of the location
+   *   - expireAt: Expiration date in ISO format
+   *   - token: JWT token for authorization
    */
   createTeamPin: async (payload: AdminTeamPinCreatePayload): Promise<AdminTeamPinResponse> => {
     try {
-      const response = await adminApiClient.post<AdminTeamPinResponse>('/api/admin/team-pins', payload);
+      // Extract token and other fields from payload
+      const { token, locationId, expireAt, pin } = payload;
+      
+      // Ensure pin is exactly 4 digits
+      const formattedPin = pin.toString().padStart(4, '0').slice(0, 4);
+      
+      if (!/^\d{4}$/.test(formattedPin)) {
+        throw new Error('PIN must be exactly 4 digits');
+      }
+
+      const response = await axios.post<AdminTeamPinResponse>(
+        // Use the correct API endpoint
+        `${API_BASE_URL}/api/admin/pins`,
+        // Send exactly these fields in the request body
+        {
+          pin: formattedPin,          // 4-digit string
+          location_id: locationId,    // UUID
+          expire_at: expireAt         // ISO date string
+        },
+        // Required headers
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      console.log('✅ PIN created successfully');
       return response.data;
-    } catch (error) {
-      console.error('Error creating team PIN:', error);
-      throw error;
+      
+    } catch (error: any) {
+      // Log detailed error information
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error('❌ Error creating team PIN:', errorMessage);
+      
+      // Re-throw with a more descriptive error
+      const customError = new Error(`Failed to create PIN: ${errorMessage}`);
+      (customError as any).response = error.response;
+      throw customError;
     }
   },
 
