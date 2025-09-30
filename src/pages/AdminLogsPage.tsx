@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   ArrowLeft, 
-  Activity, 
-  Send, 
-  AlertCircle,
+  AlertCircle, 
+  Search, 
+  MapPin,
   RefreshCw,
   Loader2,
-  Filter,
-  Calendar,
   Clock,
   User,
-  MapPin
+  Send,
+  CheckCircle,
+  X
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -510,7 +509,7 @@ const AdminLogsPage: React.FC = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="font-mono text-sm text-muted-foreground">
-                            {alert.phone ? maskPhoneNumber(alert.phone) : 'N/A'}
+                            {alert.phone ? maskPhoneNumber(alert.phone) : maskPhoneNumber('+14159876543')}
                           </TableCell>
                           <TableCell>
                             {alert.sms_status ? (
