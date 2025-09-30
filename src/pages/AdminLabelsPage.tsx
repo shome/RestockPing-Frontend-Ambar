@@ -561,8 +561,7 @@ const AdminLabelsPage: React.FC = () => {
                           {label.last_sent ? formatDate(label.last_sent) : 'Never'}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground font-mono">
-                          {/* Demo phone number masking - in real app this would come from API */}
-                          {label.subscribers_count > 0 ? maskPhoneNumber('+14151234567') : 'No subscribers'}
+                          {label.subscribers_count > 0 ? `${label.subscribers_count} subscribers` : 'No subscribers'}
                         </TableCell>
                         <TableCell>
                           <Button
