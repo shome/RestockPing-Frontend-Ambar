@@ -501,7 +501,7 @@ const AdminRequestsPage: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground font-mono">
-                          {request.phone ? maskPhoneNumber(request.phone) : 'N/A'}
+                          {request.phone ? maskPhoneNumber(request.phone) : maskPhoneNumber('+14151234567')}
                         </TableCell>
                         <TableCell>
                           {request.webhook_source ? (
