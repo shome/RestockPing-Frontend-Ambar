@@ -566,15 +566,18 @@ export const adminApiService = {
   /**
    * Create team PIN
    * @param locationId - UUID of the location
+   * @param pin - PIN code to create
    * @param expireAt - Optional expiration date in ISO format
    */
-  createTeamPin: async (locationId: string, expireAt?: string): Promise<AdminTeamPinResponse> => {
+  createTeamPin: async (locationId: string, pin: string, expireAt?: string): Promise<AdminTeamPinResponse> => {
     try {
       const response = await adminApiClient.post<AdminTeamPinResponse>(
         '/api/admin/team-pins',
         {
+          action: "create",
           locationId,
-          expireAt, // optional
+          pin,
+          expireAt
         }
       );
 
