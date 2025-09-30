@@ -98,17 +98,12 @@ const AdminRequestsPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error fetching labels:', error);
       // Fallback to mock labels if API fails
-      const mockLabels = [
-        { id: '740305ac-77b6-420b-b77e-63ac65c23b8f', name: 'Smartphones', code: 'PHONE' },
-        { id: 'a4119f69-843c-41cc-90af-3cc624d2f6be', name: 'Laptops', code: 'LAPTOP' },
-        { id: 'a0edf7f7-2e34-49f5-ac5c-b50fcc11156e', name: 'Tablets', code: 'TABLET' },
-        { id: 'f7912b4a-6f73-4096-a0a3-5552cc6b77db', name: 'Headphones', code: 'HEADPHONES' },
-        { id: 'fa4373b5-d93b-4df3-9dd1-a7f69a4da18d', name: 'Cameras (Updated1)', code: 'CAMERA' },
-        { id: '892efaa5-a321-42a9-ad56-f78a49ea5b77', name: 'Drones', code: 'DRONE' },
-        { id: '0329ccb2-a762-46d8-88d1-c9150102d1e5', name: 'Gaming', code: 'GAMING' },
-        { id: 'e49b1f24-03f5-42f5-8c9b-0e8e15773a48', name: 'Monitors', code: 'MONITOR' },
-        { id: '8bbf3383-7313-4d18-a3e3-b9bb9d231ecc', name: 'Smartwatches', code: 'SMARTWATCH' },
-        { id: 'd83bf7f4-a10a-45b8-8b79-6540cc7ee70c', name: 'Televisions', code: 'TV' }
+      const mockLabels: AdminLabelEntry[] = [
+        { id: '1', name: 'Milk', code: 'MILK', synonyms: 'dairy', active: true, location_id: 'loc-1', location_name: 'Paris Office', subscribers_count: 5, total_sends: 12, last_sent: '2024-01-15T10:30:00Z' },
+        { id: '2', name: 'Bread', code: 'BREAD', synonyms: 'bakery', active: true, location_id: 'loc-1', location_name: 'Paris Office', subscribers_count: 8, total_sends: 20, last_sent: '2024-01-14T15:45:00Z' },
+        { id: '3', name: 'Eggs', code: 'EGGS', synonyms: 'protein', active: true, location_id: 'loc-2', location_name: 'London Office', subscribers_count: 3, total_sends: 7, last_sent: '2024-01-13T09:15:00Z' },
+        { id: '4', name: 'Apples', code: 'APPLES', synonyms: 'fruit', active: true, location_id: 'loc-2', location_name: 'London Office', subscribers_count: 6, total_sends: 15, last_sent: '2024-01-12T14:20:00Z' },
+        { id: '5', name: 'Bananas', code: 'BANANAS', synonyms: 'fruit', active: true, location_id: 'loc-3', location_name: 'New York Office', subscribers_count: 4, total_sends: 9, last_sent: '2024-01-11T11:30:00Z' }
       ];
       setLabels(mockLabels);
       toast({
@@ -482,6 +477,7 @@ const AdminRequestsPage: React.FC = () => {
                     <TableRow>
                       <TableHead>Request Text</TableHead>
                       <TableHead>Customer Phone</TableHead>
+                      <TableHead>Webhook Status</TableHead>
                       <TableHead>Created At</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Matched Label</TableHead>
@@ -505,8 +501,23 @@ const AdminRequestsPage: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground font-mono">
-                          {/* Demo phone number masking - in real app this would come from API */}
-                          {maskPhoneNumber('+14151234567')}
+                          {request.phone ? maskPhoneNumber(request.phone) : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {request.webhook_source ? (
+                            <div className="flex items-center gap-2">
+                              <Badge variant={request.webhook_valid ? 'default' : 'destructive'}>
+                                {request.webhook_source}
+                              </Badge>
+                              {!request.webhook_valid && request.webhook_error && (
+                                <span className="text-xs text-red-600" title={request.webhook_error}>
+                                  Error
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <Badge variant="outline">Direct</Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">

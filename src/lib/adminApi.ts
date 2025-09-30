@@ -180,6 +180,9 @@ export interface AdminLogEntry {
   count_sent: number;
   sender: string;
   location_name: string;
+  phone?: string;  // Masked phone number
+  sms_status?: 'success' | 'failed' | 'pending';
+  sms_error?: string;
 }
 
 export interface AdminRequestEntry {
@@ -191,6 +194,23 @@ export interface AdminRequestEntry {
   location_name: string;
   matched_label_name: string | null;
   is_cant_find?: boolean;
+  phone?: string;  // Masked phone number
+  webhook_source?: string;  // e.g., 'Twilio'
+  webhook_valid?: boolean;
+  webhook_error?: string;
+}
+
+export interface AdminLabelEntry {
+  id: string;
+  code: string;
+  name: string;
+  synonyms: string;
+  active: boolean;
+  location_id: string;
+  location_name: string;
+  subscribers_count: number;
+  total_sends: number;
+  last_sent: string;
 }
 
 export interface AdminLogsResponse {
@@ -233,7 +253,13 @@ export interface AdminTeamPinCreatePayload {
   pin: string;  // Required 4-digit string
   locationId: string;  // UUID
   expireAt: string;  // ISO date string
-  token: string;  // JWT token for authorization
+}
+
+export interface AdminTeamPinUpdatePayload {
+  id: string;  // PIN ID
+  pin?: string;  // Optional 4-digit string
+  expireAt?: string;  // Optional ISO date string
+  status?: 'active' | 'disabled';  // Optional status
 }
 
 export interface AdminTeamPinResponse {
@@ -267,6 +293,7 @@ export interface AdminPinEntry {
   active: boolean;
   created_at: string;
   type: 'team' | 'staff';
+  status?: 'active' | 'disabled';
 }
 
 export interface AdminPinsResponse {
@@ -541,12 +568,10 @@ export const adminApiService = {
    *   - pin: 4 digits as string
    *   - locationId: UUID of the location
    *   - expireAt: Expiration date in ISO format
-   *   - token: JWT token for authorization
    */
   createTeamPin: async (payload: AdminTeamPinCreatePayload): Promise<AdminTeamPinResponse> => {
     try {
-      // Extract token and other fields from payload
-      const { token, locationId, expireAt, pin } = payload;
+      const { locationId, expireAt, pin } = payload;
       
       // Ensure pin is exactly 4 digits
       const formattedPin = pin.toString().padStart(4, '0').slice(0, 4);
@@ -555,21 +580,12 @@ export const adminApiService = {
         throw new Error('PIN must be exactly 4 digits');
       }
 
-      const response = await axios.post<AdminTeamPinResponse>(
-        // Use the correct API endpoint
-        `${API_BASE_URL}/api/admin/pins`,
-        // Send exactly these fields in the request body
+      const response = await adminApiClient.post<AdminTeamPinResponse>(
+        '/api/admin/team-pins',
         {
           pin: formattedPin,          // 4-digit string
           location_id: locationId,    // UUID
           expire_at: expireAt         // ISO date string
-        },
-        // Required headers
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
         }
       );
 
@@ -585,6 +601,66 @@ export const adminApiService = {
       const customError = new Error(`Failed to create PIN: ${errorMessage}`);
       (customError as any).response = error.response;
       throw customError;
+    }
+  },
+
+  /**
+   * Update team PIN
+   * @param payload - PIN update payload
+   */
+  updateTeamPin: async (payload: AdminTeamPinUpdatePayload): Promise<AdminTeamPinResponse> => {
+    try {
+      const { id, ...updateData } = payload;
+      
+      // If pin is provided, ensure it's exactly 4 digits
+      if (updateData.pin) {
+        const formattedPin = updateData.pin.toString().padStart(4, '0').slice(0, 4);
+        if (!/^\d{4}$/.test(formattedPin)) {
+          throw new Error('PIN must be exactly 4 digits');
+        }
+        updateData.pin = formattedPin;
+      }
+
+      const response = await adminApiClient.post<AdminTeamPinResponse>(
+        '/api/admin/pins',
+        {
+          action: 'rotate',
+          pin_id: id,
+          ...updateData
+        }
+      );
+
+      console.log('✅ PIN updated successfully');
+      return response.data;
+      
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error('❌ Error updating team PIN:', errorMessage);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete team PIN
+   * @param pinId - ID of the PIN to delete
+   */
+  deleteTeamPin: async (pinId: string): Promise<AdminTeamPinResponse> => {
+    try {
+      const response = await adminApiClient.post<AdminTeamPinResponse>(
+        '/api/admin/pins',
+        {
+          action: 'disable',
+          pin_id: pinId
+        }
+      );
+
+      console.log('✅ PIN deleted successfully');
+      return response.data;
+      
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error('❌ Error deleting team PIN:', errorMessage);
+      throw error;
     }
   },
 

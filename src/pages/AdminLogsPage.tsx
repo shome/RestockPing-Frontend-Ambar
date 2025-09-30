@@ -486,9 +486,10 @@ const AdminLogsPage: React.FC = () => {
                         <TableHead>Label</TableHead>
                         <TableHead>Sent At</TableHead>
                         <TableHead>Count Sent</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>SMS Status</TableHead>
                         <TableHead>Sender</TableHead>
                         <TableHead>Location</TableHead>
-                        <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -508,6 +509,37 @@ const AdminLogsPage: React.FC = () => {
                               {alert.count_sent} subscribers
                             </Badge>
                           </TableCell>
+                          <TableCell className="font-mono text-sm text-muted-foreground">
+                            {alert.phone ? maskPhoneNumber(alert.phone) : 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {alert.sms_status ? (
+                              <div className="flex items-center gap-2">
+                                {alert.sms_status === 'success' && (
+                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                )}
+                                {alert.sms_status === 'failed' && (
+                                  <X className="h-4 w-4 text-red-600" />
+                                )}
+                                {alert.sms_status === 'pending' && (
+                                  <Clock className="h-4 w-4 text-yellow-600" />
+                                )}
+                                <Badge variant={
+                                  alert.sms_status === 'success' ? 'default' :
+                                  alert.sms_status === 'failed' ? 'destructive' : 'secondary'
+                                }>
+                                  {alert.sms_status}
+                                </Badge>
+                                {alert.sms_error && (
+                                  <span className="text-xs text-red-600 ml-2" title={alert.sms_error}>
+                                    Error
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <Badge variant="outline">Unknown</Badge>
+                            )}
+                          </TableCell>
                           <TableCell className="font-mono text-sm">
                             {alert.sender}
                           </TableCell>
@@ -516,11 +548,6 @@ const AdminLogsPage: React.FC = () => {
                               <MapPin className="h-4 w-4 text-muted-foreground" />
                               {alert.location_name}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="default">
-                              {alert.status}
-                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
