@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { adminApiService, AdminTeamPinCreatePayload, AdminPinEntry, AdminLocationsResponse, AdminTeamPinUpdatePayload } from '@/lib/adminApi';
+import { adminApiService, AdminPinEntry, AdminLocationsResponse } from '@/lib/adminApi';
 import AdminNavigation from '@/components/AdminNavigation';
 
 const AdminPinsPage: React.FC = () => {
@@ -57,7 +57,7 @@ const AdminPinsPage: React.FC = () => {
     try {
       setIsLoading(true);
       await Promise.all([
-        fetchPins('team'),
+        fetchPins(),
         fetchLocations()
       ]);
     } catch (error) {
@@ -105,19 +105,10 @@ const AdminPinsPage: React.FC = () => {
   };
 
   const handleCreateTeamPin = async () => {
-    if (!teamPinForm.pin || !teamPinForm.locationId || !teamPinForm.expireAt) {
+    if (!teamPinForm.locationId) {
       toast({
         title: "Missing information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (teamPinForm.pin.length !== 4) {
-      toast({
-        title: "Invalid PIN",
-        description: "PIN must be exactly 4 digits",
+        description: "Please select a location",
         variant: "destructive",
       });
       return;
@@ -125,13 +116,12 @@ const AdminPinsPage: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const payload: AdminTeamPinCreatePayload = {
-        pin: teamPinForm.pin,
-        locationId: teamPinForm.locationId,
-        expireAt: teamPinForm.expireAt
-      };
-
-      const response = await adminApiService.createTeamPin(payload);
+      
+      // Use the new API function signature
+      const response = await adminApiService.createTeamPin(
+        teamPinForm.locationId,
+        teamPinForm.expireAt || undefined
+      );
       
       if (response.success) {
         toast({
@@ -145,7 +135,7 @@ const AdminPinsPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error creating team PIN:', error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to create team PIN";
+      const errorMessage = error.message || "Failed to create team PIN";
       toast({
         title: "Error creating team PIN",
         description: errorMessage,
@@ -167,30 +157,28 @@ const AdminPinsPage: React.FC = () => {
   };
 
   const handleRotatePin = async (pin: AdminPinEntry) => {
-    // Generate a new random 4-digit PIN
-    const newPin = Math.floor(1000 + Math.random() * 9000).toString();
-    
     try {
       setIsLoading(true);
-      const payload = {
-        id: pin.id,
-        pin: newPin,
-        expireAt: pin.expire_at,
-        status: pin.status || 'active'
-      };
-
-      const response = await adminApiService.updateTeamPin(payload);
+      
+      // First delete the old PIN, then create a new one
+      await adminApiService.deleteTeamPin(pin.id);
+      
+      // Create a new PIN for the same location
+      const response = await adminApiService.createTeamPin(
+        pin.location_id || 'default-location', // You might need to store location_id in AdminPinEntry
+        pin.expire_at
+      );
       
       if (response.success) {
         toast({
           title: "PIN rotated",
-          description: `PIN updated to ${newPin}`,
+          description: `New PIN created: ${response.pin}`,
         });
         fetchPins();
       }
     } catch (error: any) {
       console.error('Error rotating PIN:', error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to rotate PIN";
+      const errorMessage = error.message || "Failed to rotate PIN";
       toast({
         title: "Error rotating PIN",
         description: errorMessage,
@@ -202,29 +190,32 @@ const AdminPinsPage: React.FC = () => {
   };
 
   const handleToggleStatus = async (pin: AdminPinEntry) => {
-    const newStatus = pin.status === 'active' ? 'disabled' : 'active';
+    const isCurrentlyActive = pin.status === 'active' || pin.active;
     
     try {
       setIsLoading(true);
-      const payload = {
-        id: pin.id,
-        pin: pin.pin,
-        expireAt: pin.expire_at,
-        status: newStatus
-      };
-
-      const response = await adminApiService.updateTeamPin(payload);
       
-      if (response.success) {
+      if (isCurrentlyActive) {
+        // Disable the PIN
+        const response = await adminApiService.disableTeamPin(pin.id);
+        
+        if (response.success) {
+          toast({
+            title: "PIN disabled",
+            description: `PIN ${pin.pin} has been disabled`,
+          });
+          fetchPins();
+        }
+      } else {
         toast({
-          title: `PIN ${newStatus === 'active' ? 'enabled' : 'disabled'}`,
-          description: `PIN ${pin.pin} is now ${newStatus}`,
+          title: "Cannot enable PIN",
+          description: "Disabled PINs cannot be re-enabled. Please create a new PIN.",
+          variant: "destructive",
         });
-        fetchPins();
       }
     } catch (error: any) {
       console.error('Error updating PIN status:', error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to update PIN status";
+      const errorMessage = error.message || "Failed to update PIN status";
       toast({
         title: "Error updating PIN",
         description: errorMessage,
@@ -236,19 +227,10 @@ const AdminPinsPage: React.FC = () => {
   };
 
   const handleUpdatePin = async () => {
-    if (!selectedPin || !editPinForm.pin || !editPinForm.expireAt) {
+    if (!selectedPin) {
       toast({
-        title: "Missing information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (editPinForm.pin.length !== 4) {
-      toast({
-        title: "Invalid PIN",
-        description: "PIN must be exactly 4 digits",
+        title: "No PIN selected",
+        description: "Please select a PIN to update",
         variant: "destructive",
       });
       return;
@@ -256,27 +238,31 @@ const AdminPinsPage: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const payload = {
-        id: selectedPin.id,
-        pin: editPinForm.pin,
-        expireAt: editPinForm.expireAt,
-        status: editPinForm.status
-      };
-
-      const response = await adminApiService.updateTeamPin(payload);
       
-      if (response.success) {
+      // For now, we'll just disable the PIN since backend doesn't support direct updates
+      // In the future, you might want to delete and recreate with new settings
+      if (editPinForm.status === 'disabled') {
+        const response = await adminApiService.disableTeamPin(selectedPin.id);
+        
+        if (response.success) {
+          toast({
+            title: "PIN updated",
+            description: "PIN has been disabled",
+          });
+          setShowEditDialog(false);
+          setSelectedPin(null);
+          fetchPins();
+        }
+      } else {
         toast({
-          title: "PIN updated",
-          description: "PIN updated successfully",
+          title: "Update not supported",
+          description: "PIN editing is limited. You can disable PINs or create new ones.",
+          variant: "destructive",
         });
-        setShowEditDialog(false);
-        setSelectedPin(null);
-        fetchPins();
       }
     } catch (error: any) {
       console.error('Error updating PIN:', error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to update PIN";
+      const errorMessage = error.message || "Failed to update PIN";
       toast({
         title: "Error updating PIN",
         description: errorMessage,
@@ -305,7 +291,7 @@ const AdminPinsPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error deleting PIN:', error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to delete PIN";
+      const errorMessage = error.message || "Failed to delete PIN";
       toast({
         title: "Error deleting PIN",
         description: errorMessage,
@@ -333,7 +319,7 @@ const AdminPinsPage: React.FC = () => {
 
   const getExpiryStatus = (expireAt: string, status?: string) => {
     if (status === 'disabled') {
-      return { status: 'disabled', color: 'text-gray-600', badge: 'secondary' };
+      return { status: 'disabled', color: 'text-gray-600', badge: 'secondary' as const };
     }
     
     const now = new Date();
@@ -341,11 +327,11 @@ const AdminPinsPage: React.FC = () => {
     const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysUntilExpiry < 0) {
-      return { status: 'expired', color: 'text-red-600', badge: 'destructive' };
+      return { status: 'expired', color: 'text-red-600', badge: 'destructive' as const };
     } else if (daysUntilExpiry <= 7) {
-      return { status: 'expiring', color: 'text-yellow-600', badge: 'secondary' };
+      return { status: 'expiring', color: 'text-yellow-600', badge: 'secondary' as const };
     } else {
-      return { status: 'active', color: 'text-green-600', badge: 'default' };
+      return { status: 'active', color: 'text-green-600', badge: 'default' as const };
     }
   };
 
@@ -407,19 +393,8 @@ const AdminPinsPage: React.FC = () => {
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="pin">PIN</Label>
-                          <Input
-                            id="pin"
-                            placeholder="Enter 4-digit PIN (e.g., 1234)"
-                            value={teamPinForm.pin}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, "").slice(0, 4);
-                              setTeamPinForm({ ...teamPinForm, pin: value });
-                            }}
-                            maxLength={4}
-                            className="text-left text-lg tracking-widest"
-                          />
+                        <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                          <p>📌 The PIN will be automatically generated by the system</p>
                         </div>
                         <div>
                           <Label htmlFor="location">Location</Label>

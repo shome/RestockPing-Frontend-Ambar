@@ -289,6 +289,7 @@ export interface AdminPinEntry {
   id: string;
   pin: string;
   location_name: string;
+  location_id?: string;  // Add location_id for API calls
   expire_at: string;
   active: boolean;
   created_at: string;
@@ -564,79 +565,50 @@ export const adminApiService = {
 
   /**
    * Create team PIN
-   * @param payload - Must include:
-   *   - pin: 4 digits as string
-   *   - locationId: UUID of the location
-   *   - expireAt: Expiration date in ISO format
+   * @param locationId - UUID of the location
+   * @param expireAt - Optional expiration date in ISO format
    */
-  createTeamPin: async (payload: AdminTeamPinCreatePayload): Promise<AdminTeamPinResponse> => {
+  createTeamPin: async (locationId: string, expireAt?: string): Promise<AdminTeamPinResponse> => {
     try {
-      const { locationId, expireAt, pin } = payload;
-      
-      // Ensure pin is exactly 4 digits
-      const formattedPin = pin.toString().padStart(4, '0').slice(0, 4);
-      
-      if (!/^\d{4}$/.test(formattedPin)) {
-        throw new Error('PIN must be exactly 4 digits');
-      }
-
       const response = await adminApiClient.post<AdminTeamPinResponse>(
         '/api/admin/team-pins',
         {
-          pin: formattedPin,          // 4-digit string
-          location_id: locationId,    // UUID
-          expire_at: expireAt         // ISO date string
+          locationId,
+          expireAt, // optional
         }
       );
 
-      console.log('✅ PIN created successfully');
+      console.log('✅ Team PIN created:', response.data);
       return response.data;
       
     } catch (error: any) {
-      // Log detailed error information
       const errorMessage = error.response?.data?.message || error.message;
       console.error('❌ Error creating team PIN:', errorMessage);
-      
-      // Re-throw with a more descriptive error
-      const customError = new Error(`Failed to create PIN: ${errorMessage}`);
-      (customError as any).response = error.response;
-      throw customError;
+      throw new Error('Failed to create PIN: ' + errorMessage);
     }
   },
 
   /**
-   * Update team PIN
-   * @param payload - PIN update payload
+   * Disable team PIN
+   * @param pinId - ID of the PIN to disable
    */
-  updateTeamPin: async (payload: AdminTeamPinUpdatePayload): Promise<AdminTeamPinResponse> => {
+  disableTeamPin: async (pinId: string): Promise<AdminTeamPinResponse> => {
     try {
-      const { id, ...updateData } = payload;
-      
-      // If pin is provided, ensure it's exactly 4 digits
-      if (updateData.pin) {
-        const formattedPin = updateData.pin.toString().padStart(4, '0').slice(0, 4);
-        if (!/^\d{4}$/.test(formattedPin)) {
-          throw new Error('PIN must be exactly 4 digits');
-        }
-        updateData.pin = formattedPin;
-      }
-
       const response = await adminApiClient.post<AdminTeamPinResponse>(
         '/api/admin/pins',
         {
-          action: 'rotate',
-          pin_id: id,
-          ...updateData
+          action: 'disable',
+          pinId,
         }
       );
 
-      console.log('✅ PIN updated successfully');
+      console.log('✅ Team PIN disabled:', response.data);
       return response.data;
       
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
-      console.error('❌ Error updating team PIN:', errorMessage);
-      throw error;
+      console.error('❌ Error disabling team PIN:', errorMessage);
+      throw new Error('Failed to disable PIN: ' + errorMessage);
     }
   },
 
@@ -649,18 +621,18 @@ export const adminApiService = {
       const response = await adminApiClient.post<AdminTeamPinResponse>(
         '/api/admin/pins',
         {
-          action: 'disable',
-          pin_id: pinId
+          action: 'delete',
+          pinId,
         }
       );
 
-      console.log('✅ PIN deleted successfully');
+      console.log('✅ Team PIN deleted:', response.data);
       return response.data;
       
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
       console.error('❌ Error deleting team PIN:', errorMessage);
-      throw error;
+      throw new Error('Failed to delete PIN: ' + errorMessage);
     }
   },
 
