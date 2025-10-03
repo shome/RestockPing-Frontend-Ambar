@@ -226,6 +226,26 @@ export interface CSVValidationError {
   value: string;
 }
 
+// Team Logs types
+export interface TeamLogEntry {
+  id: string;
+  type: 'SMS' | 'WEBHOOK' | 'ALERT' | 'REQUEST';
+  status: 'success' | 'failed' | 'invalid' | 'pending';
+  message: string;
+  timestamp: string;
+  phone?: string;
+  label_name?: string;
+  error_details?: string;
+}
+
+export interface TeamLogsResponse {
+  success: boolean;
+  logs: TeamLogEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 // Error types for better error handling
 export interface ApiError {
   message: string;
@@ -588,6 +608,24 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching audit logs:', error);
+      // Transform the error to include user-friendly message
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Fetch team logs with pagination
+   * @param limit - Number of logs to fetch (default: 20)
+   * @param offset - Number of logs to skip (default: 0)
+   * @returns Promise with team logs response
+   */
+  fetchTeamLogs: async (limit: number = 20, offset: number = 0): Promise<TeamLogsResponse> => {
+    try {
+      const response = await apiClient.get<TeamLogsResponse>(`/api/team/logs?limit=${limit}&offset=${offset}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching team logs:', error);
       // Transform the error to include user-friendly message
       const apiError = ApiErrorHandler.getErrorDetails(error);
       throw new Error(apiError.message);
