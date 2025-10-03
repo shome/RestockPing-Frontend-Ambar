@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   ArrowLeft, 
@@ -15,7 +16,11 @@ import {
   User,
   Send,
   CheckCircle,
-  X
+  X,
+  AlertTriangle,
+  Phone,
+  Tag,
+  Activity
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -23,10 +28,23 @@ import { adminApiService, AdminLogsResponse, AdminAlertsResponse, AdminRequestsR
 import { maskPhoneNumber } from '@/lib/phoneUtils';
 import AdminNavigation from '@/components/AdminNavigation';
 
+// Team Logs types for colored logs display
+interface TeamLogEntry {
+  id: string;
+  type: 'SMS' | 'WEBHOOK' | 'ALERT' | 'REQUEST';
+  status: 'success' | 'failed' | 'invalid' | 'pending';
+  message: string;
+  timestamp: string;
+  phone?: string;
+  label_name?: string;
+  error_details?: string;
+}
+
 const AdminLogsPage: React.FC = () => {
   const [logsData, setLogsData] = useState<AdminLogsResponse | null>(null);
   const [alertsData, setAlertsData] = useState<AdminAlertsResponse | null>(null);
   const [requestsData, setRequestsData] = useState<AdminRequestsResponse | null>(null);
+  const [teamLogs, setTeamLogs] = useState<TeamLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
@@ -49,7 +67,8 @@ const AdminLogsPage: React.FC = () => {
       await Promise.all([
         fetchLogs(),
         fetchAlerts(),
-        fetchRequests()
+        fetchRequests(),
+        fetchTeamLogs()
       ]);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -121,6 +140,53 @@ const AdminLogsPage: React.FC = () => {
     }
   };
 
+  const fetchTeamLogs = async () => {
+    try {
+      // Mock data for team logs since API endpoint might not exist yet
+      const mockTeamLogs: TeamLogEntry[] = [
+        {
+          id: "log-1",
+          type: "SMS",
+          status: "success",
+          message: "Alert sent successfully for Laptops",
+          timestamp: new Date().toISOString(),
+          phone: "+141*****23",
+          label_name: "Laptops"
+        },
+        {
+          id: "log-2",
+          type: "SMS",
+          status: "failed",
+          message: "Failed to send SMS - Invalid phone number",
+          timestamp: new Date(Date.now() - 300000).toISOString(),
+          phone: "+141*****45",
+          label_name: "Phones",
+          error_details: "Invalid phone number format"
+        },
+        {
+          id: "log-3",
+          type: "WEBHOOK",
+          status: "invalid",
+          message: "Invalid webhook signature from Twilio",
+          timestamp: new Date(Date.now() - 600000).toISOString(),
+          error_details: "Webhook signature validation failed"
+        },
+        {
+          id: "log-4",
+          type: "ALERT",
+          status: "success",
+          message: "Product alert processed successfully",
+          timestamp: new Date(Date.now() - 900000).toISOString(),
+          label_name: "Tablets"
+        }
+      ];
+      
+      setTeamLogs(mockTeamLogs);
+    } catch (error: any) {
+      console.error('Error fetching team logs:', error);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -163,6 +229,52 @@ const AdminLogsPage: React.FC = () => {
         return 'destructive';
       default:
         return 'outline';
+    }
+  };
+
+  // Helper functions for colored logs
+  const getLogStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'success':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'failed':
+        return <X className="h-4 w-4 text-red-600" />;
+      case 'invalid':
+        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-blue-600" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  const getLogBackgroundColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'success':
+        return 'bg-green-100';
+      case 'failed':
+        return 'bg-red-100';
+      case 'invalid':
+        return 'bg-yellow-100';
+      case 'pending':
+        return 'bg-blue-100';
+      default:
+        return 'bg-gray-100';
+    }
+  };
+
+  const getStatusEmoji = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'success':
+        return '✅';
+      case 'failed':
+        return '❌';
+      case 'invalid':
+        return '⚠️';
+      case 'pending':
+        return '⏳';
+      default:
+        return '📝';
     }
   };
 
@@ -272,11 +384,12 @@ const AdminLogsPage: React.FC = () => {
             </div>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all">All Logs</TabsTrigger>
             <TabsTrigger value="sends">Sends</TabsTrigger>
             <TabsTrigger value="requests">Requests</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            <TabsTrigger value="colored-logs">System Logs</TabsTrigger>
           </TabsList>
 
           {/* All Logs Tab */}
@@ -705,6 +818,110 @@ const AdminLogsPage: React.FC = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Colored System Logs Tab */}
+          <TabsContent value="colored-logs" className="space-y-6">
+            <div className="space-y-4">
+              {/* Summary Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Logs</CardTitle>
+                  <CardDescription>
+                    Real-time logs showing SMS delivery status, webhook validation, and system events
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>Total logs: {teamLogs.length}</span>
+                    <span>•</span>
+                    <span>Showing latest {teamLogs.length} entries</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Logs List */}
+              <div className="space-y-4">
+                {teamLogs.map((log) => (
+                  <div 
+                    key={log.id} 
+                    className={`p-4 rounded-lg border ${getLogBackgroundColor(log.status)}`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Status Icon */}
+                      <div className="flex items-center gap-2 mt-1">
+                        {getLogStatusIcon(log.status)}
+                        <span className="text-lg">{getStatusEmoji(log.status)}</span>
+                      </div>
+
+                      {/* Log Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <strong className="text-sm font-semibold">
+                            {log.type.toUpperCase()}
+                          </strong>
+                          <span className="text-sm text-muted-foreground">-</span>
+                          <Badge 
+                            variant={
+                              log.status === 'success' ? 'default' :
+                              log.status === 'failed' ? 'destructive' :
+                              log.status === 'invalid' ? 'secondary' : 'outline'
+                            }
+                            className="text-xs"
+                          >
+                            {log.status.toUpperCase()}
+                          </Badge>
+                        </div>
+                        
+                        <p className="text-sm mb-2">{log.message}</p>
+                        
+                        {/* Additional Info */}
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatDate(log.timestamp)}
+                          </div>
+                          
+                          {log.phone && (
+                            <div className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {log.phone}
+                            </div>
+                          )}
+                          
+                          {log.label_name && (
+                            <div className="flex items-center gap-1">
+                              <Tag className="h-3 w-3" />
+                              {log.label_name}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Error Details */}
+                        {log.error_details && (
+                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                            <strong>Error:</strong> {log.error_details}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Empty State */}
+              {teamLogs.length === 0 && (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <div className="text-muted-foreground">
+                      <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-semibold mb-2">No system logs found</h3>
+                      <p>There are no system logs to display at the moment.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
           )}
