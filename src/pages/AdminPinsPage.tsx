@@ -25,12 +25,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { adminApiService, AdminPinEntry, AdminLocationsResponse } from '@/lib/adminApi';
 import AdminNavigation from '@/components/AdminNavigation';
+import { EditPinModal } from '@/components/EditPinModal';
 
 const AdminPinsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showTeamPinDialog, setShowTeamPinDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [teamPins, setTeamPins] = useState<AdminPinEntry[]>([]);
   const [locations, setLocations] = useState<Array<{id: string, name: string}>>([]);
@@ -39,11 +40,6 @@ const AdminPinsPage: React.FC = () => {
     pin: '',
     locationId: '',
     expireAt: ''
-  });
-  const [editPinForm, setEditPinForm] = useState({
-    pin: '',
-    expireAt: '',
-    status: 'active' as 'active' | 'disabled'
   });
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -149,12 +145,7 @@ const AdminPinsPage: React.FC = () => {
 
   const handleEditPin = (pin: AdminPinEntry) => {
     setSelectedPin(pin);
-    setEditPinForm({
-      pin: pin.pin,
-      expireAt: new Date(pin.expire_at).toISOString().slice(0, 16),
-      status: pin.status || 'active'
-    });
-    setShowEditDialog(true);
+    setShowEditModal(true);
   };
 
   const handleRotatePin = async (pin: AdminPinEntry) => {
@@ -231,51 +222,10 @@ const AdminPinsPage: React.FC = () => {
     }
   };
 
-  const handleUpdatePin = async () => {
-    if (!selectedPin) {
-      toast({
-        title: "No PIN selected",
-        description: "Please select a PIN to update",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      
-      // For now, we'll just disable the PIN since backend doesn't support direct updates
-      // In the future, you might want to delete and recreate with new settings
-      if (editPinForm.status === 'disabled') {
-        const response = await adminApiService.disableTeamPin(selectedPin.id);
-        
-        if (response.success) {
-          toast({
-            title: "PIN updated",
-            description: "PIN has been disabled",
-          });
-          setShowEditDialog(false);
-          setSelectedPin(null);
-          fetchPins();
-        }
-      } else {
-        toast({
-          title: "Update not supported",
-          description: "PIN editing is limited. You can disable PINs or create new ones.",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      console.error('Error updating PIN:', error);
-      const errorMessage = error.message || "Failed to update PIN";
-      toast({
-        title: "Error updating PIN",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handlePinUpdated = (updatedPin: any) => {
+    // Refresh the pins list after successful update
+    fetchPins();
+    setSelectedPin(null);
   };
 
   const handleDeletePin = async () => {
@@ -309,17 +259,33 @@ const AdminPinsPage: React.FC = () => {
 
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   const isExpired = (expireAt: string) => {
-    return new Date(expireAt) < new Date();
+    try {
+      const date = new Date(expireAt);
+      if (isNaN(date.getTime())) {
+        return false; // Invalid dates are not considered expired
+      }
+      return date < new Date();
+    } catch (error) {
+      return false;
+    }
   };
 
   const getExpiryStatus = (expireAt: string, status?: string) => {
@@ -327,16 +293,25 @@ const AdminPinsPage: React.FC = () => {
       return { status: 'disabled', color: 'text-gray-600', badge: 'secondary' as const };
     }
     
-    const now = new Date();
-    const expiry = new Date(expireAt);
-    const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (daysUntilExpiry < 0) {
-      return { status: 'expired', color: 'text-red-600', badge: 'destructive' as const };
-    } else if (daysUntilExpiry <= 7) {
-      return { status: 'expiring', color: 'text-yellow-600', badge: 'secondary' as const };
-    } else {
-      return { status: 'active', color: 'text-green-600', badge: 'default' as const };
+    try {
+      const now = new Date();
+      const expiry = new Date(expireAt);
+      
+      if (isNaN(expiry.getTime())) {
+        return { status: 'invalid', color: 'text-orange-600', badge: 'secondary' as const };
+      }
+      
+      const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntilExpiry < 0) {
+        return { status: 'expired', color: 'text-red-600', badge: 'destructive' as const };
+      } else if (daysUntilExpiry <= 7) {
+        return { status: 'expiring', color: 'text-yellow-600', badge: 'secondary' as const };
+      } else {
+        return { status: 'active', color: 'text-green-600', badge: 'default' as const };
+      }
+    } catch (error) {
+      return { status: 'invalid', color: 'text-orange-600', badge: 'secondary' as const };
     }
   };
 
@@ -508,7 +483,7 @@ const AdminPinsPage: React.FC = () => {
                             <div className="text-right">
                               <p className="text-sm text-muted-foreground">Expires</p>
                               <p className={`text-sm ${expiryStatus.color}`}>
-                                {formatDate(pin.expire_at)}
+                                {pin.expire_at ? formatDate(pin.expire_at) : 'No expiry'}
                               </p>
                             </div>
                             <Badge variant={expiryStatus.badge}>
@@ -584,74 +559,16 @@ const AdminPinsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Edit PIN Dialog */}
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Team PIN</DialogTitle>
-              <DialogDescription>
-                Update the PIN details for {selectedPin?.location_name}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-pin">PIN</Label>
-                <Input
-                  id="edit-pin"
-                  placeholder="Enter 4-digit PIN"
-                  value={editPinForm.pin}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, "").slice(0, 4);
-                    setEditPinForm({ ...editPinForm, pin: value });
-                  }}
-                  maxLength={4}
-                  className="text-left text-lg tracking-widest"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-expireAt">Expiry Date</Label>
-                <Input
-                  id="edit-expireAt"
-                  type="datetime-local"
-                  value={editPinForm.expireAt}
-                  onChange={(e) => setEditPinForm({ ...editPinForm, expireAt: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-status">Status</Label>
-                <Select
-                  value={editPinForm.status}
-                  onValueChange={(value: 'active' | 'disabled') => setEditPinForm({ ...editPinForm, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="disabled">Disabled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowEditDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleUpdatePin}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
-                  Update PIN
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Edit PIN Modal */}
+        <EditPinModal
+          pin={selectedPin}
+          open={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedPin(null);
+          }}
+          onSaved={handlePinUpdated}
+        />
 
         {/* Delete PIN Dialog */}
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

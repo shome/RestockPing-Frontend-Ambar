@@ -616,6 +616,28 @@ export const adminApiService = {
   },
 
   /**
+   * Update team PIN
+   * @param pinId - ID of the PIN to update
+   * @param payload - Update payload containing newPin and optionally expireAt
+   */
+  updateTeamPin: async (pinId: string, payload: { newPin: string; expireAt?: string }): Promise<AdminTeamPinResponse> => {
+    try {
+      const response = await adminApiClient.put<AdminTeamPinResponse>(
+        `/api/admin/pins/${encodeURIComponent(pinId)}`,
+        payload
+      );
+
+      console.log('✅ Team PIN updated:', response.data);
+      return response.data;
+      
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error('❌ Error updating team PIN:', errorMessage);
+      throw new Error('Failed to update PIN: ' + errorMessage);
+    }
+  },
+
+  /**
    * Delete team PIN
    * @param pinId - ID of the PIN to delete
    */
