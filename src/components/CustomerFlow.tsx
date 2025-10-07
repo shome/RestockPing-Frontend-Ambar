@@ -138,14 +138,15 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
       return;
     }
 
-    if (isCustomProduct && (!isImageValid || !uploadedImage)) {
-      toast({
-        title: "Image required",
-        description: "Please upload an image before proceeding.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Image is now optional for custom products
+    // if (isCustomProduct && (!isImageValid || !uploadedImage)) {
+    //   toast({
+    //     title: "Image required",
+    //     description: "Please upload an image before proceeding.",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     if (!isPhoneValid || !phone.trim() || !selectedCountry) {
       toast({
@@ -378,7 +379,7 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
               {/* Image Upload - Only for custom products */}
               {isCustomProduct && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Upload Image (Required)</label>
+                  <label className="text-sm font-medium">Upload Image (Optional)</label>
                   <ImageUpload
                     value={uploadedImage}
                     onChange={setUploadedImage}
@@ -459,12 +460,9 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
                     !captchaSessionId || 
                     captchaAnswer === null ||
                     !isPhoneValid ||
-                    // Image requirement only for custom products
-                    (isCustomProduct && !isImageValid) ||
                     // Additional requirements
                     !phone.trim() || 
                     !selectedCountry ||
-                    (isCustomProduct && !uploadedImage) ||
                     isThrottled ||
                     (isCustomProduct && !customProductName.trim()) ||
                     // Loading state
