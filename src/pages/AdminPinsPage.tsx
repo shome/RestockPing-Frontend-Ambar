@@ -102,10 +102,22 @@ const AdminPinsPage: React.FC = () => {
   };
 
   const handleCreateTeamPin = async () => {
+    // Validate required fields
     if (!teamPinForm.locationId || !teamPinForm.pin) {
       toast({
         title: "Missing information",
         description: "Please enter a PIN and select a location",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate PIN format (exactly 4 digits)
+    const pinRegex = /^\d{4}$/;
+    if (!pinRegex.test(teamPinForm.pin)) {
+      toast({
+        title: "Invalid PIN format",
+        description: "PIN must be exactly 4 digits (e.g., 1234)",
         variant: "destructive",
       });
       return;
@@ -321,17 +333,24 @@ const AdminPinsPage: React.FC = () => {
                       <div className="space-y-4">
                         <div>
                           <Label htmlFor="pin" className="block text-sm font-medium text-gray-700">
-                            Enter PIN for Team Access
+                            Enter 4-Digit PIN for Team Access
                           </Label>
                           <Input
                             type="text"
                             id="pin"
                             name="pin"
-                            maxLength={6}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            maxLength={4}
+                            pattern="\d{4}"
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm font-mono text-center text-lg"
                             value={teamPinForm.pin}
-                            onChange={(e) => setTeamPinForm({ ...teamPinForm, pin: e.target.value })}
-                            placeholder="Enter a PIN e.g. 5678"
+                            onChange={(e) => {
+                              // Only allow numeric input
+                              const value = e.target.value.replace(/\D/g, '');
+                              if (value.length <= 4) {
+                                setTeamPinForm({ ...teamPinForm, pin: value });
+                              }
+                            }}
+                            placeholder="1234"
                           />
                         </div>
                         <div>
