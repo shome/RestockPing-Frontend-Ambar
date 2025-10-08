@@ -80,8 +80,24 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
     setLoading(true);
     
     try {
-      // Prepare payload with safe date conversion
-      const payload: any = { newPin };
+      // Prepare payload with safe date conversion and location_id
+      const payload: any = { 
+        newPin,
+        locationId: pin.location_id // Include location ID from the PIN object
+      };
+      
+      // Validate that we have location_id
+      if (!payload.locationId) {
+        const errorMsg = 'Location ID is missing from PIN data';
+        setError(errorMsg);
+        toast({
+          title: "Missing Location",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
       
       if (expireLocal && expireLocal.trim() !== '') {
         const isoDate = fromInputDateTimeLocal(expireLocal);
