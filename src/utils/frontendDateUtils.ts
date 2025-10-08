@@ -8,11 +8,15 @@
  * @returns Formatted date string or "Invalid Date" if invalid
  */
 export const formatDateDisplay = (dateString: string | null | undefined): string => {
-  if (!dateString) return "No expiry";
+  // Handle null, undefined, empty string, or 'null' string
+  if (!dateString || dateString === 'null' || dateString.trim() === '') {
+    return "No expiry";
+  }
   
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
+      console.warn('Invalid date string received:', dateString);
       return "Invalid Date";
     }
     
@@ -60,7 +64,8 @@ export const getExpiryStatus = (expireAt: string | null | undefined, status?: st
     return { status: 'disabled', color: 'text-gray-600', badge: 'secondary' as const };
   }
   
-  if (!expireAt) {
+  // Handle null, undefined, empty string, or 'null' string
+  if (!expireAt || expireAt === 'null' || expireAt.trim() === '') {
     return { status: 'no expiry', color: 'text-blue-600', badge: 'default' as const };
   }
   
@@ -93,11 +98,15 @@ export const getExpiryStatus = (expireAt: string | null | undefined, status?: st
  * @returns Formatted string for datetime-local input or empty string if invalid
  */
 export const toInputDateTimeLocal = (dateString: string | null | undefined): string => {
-  if (!dateString) return '';
+  // Handle null, undefined, empty string, or 'null' string
+  if (!dateString || dateString === 'null' || dateString.trim() === '') {
+    return '';
+  }
   
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
+      console.warn('Invalid date for input conversion:', dateString);
       return '';
     }
     

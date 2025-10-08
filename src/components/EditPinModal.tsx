@@ -55,20 +55,46 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
 
   const handleSave = async () => {
     setError(null);
-    if (!pin) return setError('No PIN selected');
-    if (!validatePin(newPin)) return setError('PIN must be 4 digits');
+    if (!pin) {
+      const errorMsg = 'No PIN selected';
+      setError(errorMsg);
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!validatePin(newPin)) {
+      const errorMsg = 'PIN must be exactly 4 digits';
+      setError(errorMsg);
+      toast({
+        title: "Invalid PIN",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
       // Prepare payload with safe date conversion
       const payload: any = { newPin };
       
-      if (expireLocal) {
+      if (expireLocal && expireLocal.trim() !== '') {
         const isoDate = fromInputDateTimeLocal(expireLocal);
         if (isoDate) {
           payload.expireAt = isoDate;
         } else {
-          setError('Invalid expiry date format');
+          const errorMsg = 'Invalid expiry date format';
+          setError(errorMsg);
+          toast({
+            title: "Invalid Date",
+            description: errorMsg,
+            variant: "destructive",
+          });
           setLoading(false);
           return;
         }
@@ -77,19 +103,39 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
         payload.expireAt = null;
       }
 
+      console.log('🔄 Updating PIN with payload:', { pinId: pin.id, payload });
       const resp = await adminApiService.updateTeamPin(pin.id, payload);
+      console.log('✅ PIN update response:', resp);
 
-      // success
+      // Success
       toast({
         title: "PIN updated successfully",
-        description: `PIN for ${pin.location_name} has been updated`,
+        description: `PIN for ${pin.location_name} has been updated to ${newPin}`,
       });
       
       if (onSaved) onSaved(resp);
       onClose();
     } catch (e: any) {
-      console.error('Edit PIN error', e);
-      const errorMessage = e?.response?.data?.error || e?.response?.data?.message || e.message || 'Unknown error';
+      console.error('❌ Edit PIN error:', {
+        error: e,
+        response: e?.response?.data,
+        status: e?.response?.status,
+        pinId: pin?.id,
+        payload: { newPin, expireAt: expireLocal }
+      });
+      
+      // Extract error message with multiple fallbacks
+      let errorMessage = 'Unknown error occurred';
+      if (e?.response?.data?.error) {
+        errorMessage = e.response.data.error;
+      } else if (e?.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      } else if (e?.message) {
+        errorMessage = e.message;
+      } else if (e?.response?.statusText) {
+        errorMessage = `HTTP ${e.response.status}: ${e.response.statusText}`;
+      }
+      
       setError(errorMessage);
       toast({
         title: "Error updating PIN",
