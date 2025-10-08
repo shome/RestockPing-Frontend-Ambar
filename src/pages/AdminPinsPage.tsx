@@ -26,6 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { adminApiService, AdminPinEntry, AdminLocationsResponse } from '@/lib/adminApi';
 import AdminNavigation from '@/components/AdminNavigation';
 import { EditPinModal } from '@/components/EditPinModal';
+import { formatDateDisplay, getExpiryStatus } from '@/utils/frontendDateUtils';
 
 const AdminPinsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -258,62 +259,7 @@ const AdminPinsPage: React.FC = () => {
   };
 
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return 'Invalid Date';
-      }
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      return 'Invalid Date';
-    }
-  };
-
-  const isExpired = (expireAt: string) => {
-    try {
-      const date = new Date(expireAt);
-      if (isNaN(date.getTime())) {
-        return false; // Invalid dates are not considered expired
-      }
-      return date < new Date();
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const getExpiryStatus = (expireAt: string, status?: string) => {
-    if (status === 'disabled') {
-      return { status: 'disabled', color: 'text-gray-600', badge: 'secondary' as const };
-    }
-    
-    try {
-      const now = new Date();
-      const expiry = new Date(expireAt);
-      
-      if (isNaN(expiry.getTime())) {
-        return { status: 'invalid', color: 'text-orange-600', badge: 'secondary' as const };
-      }
-      
-      const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (daysUntilExpiry < 0) {
-        return { status: 'expired', color: 'text-red-600', badge: 'destructive' as const };
-      } else if (daysUntilExpiry <= 7) {
-        return { status: 'expiring', color: 'text-yellow-600', badge: 'secondary' as const };
-      } else {
-        return { status: 'active', color: 'text-green-600', badge: 'default' as const };
-      }
-    } catch (error) {
-      return { status: 'invalid', color: 'text-orange-600', badge: 'secondary' as const };
-    }
-  };
+  // Date formatting functions moved to utils/frontendDateUtils.ts
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -483,7 +429,7 @@ const AdminPinsPage: React.FC = () => {
                             <div className="text-right">
                               <p className="text-sm text-muted-foreground">Expires</p>
                               <p className={`text-sm ${expiryStatus.color}`}>
-                                {pin.expire_at ? formatDate(pin.expire_at) : 'No expiry'}
+                                {formatDateDisplay(pin.expire_at)}
                               </p>
                             </div>
                             <Badge variant={expiryStatus.badge}>

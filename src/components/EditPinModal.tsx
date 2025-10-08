@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { adminApiService, AdminPinEntry } from '@/lib/adminApi';
+import { toInputDateTimeLocal, fromInputDateTimeLocal } from '@/utils/frontendDateUtils';
 
 type Props = {
   pin: AdminPinEntry | null;
@@ -14,14 +15,7 @@ type Props = {
   onSaved?: (updated: any) => void;
 };
 
-function toInputDateTimeLocal(expireAt?: string | null): string {
-  if (!expireAt) return '';
-  const d = new Date(expireAt);
-  if (Number.isNaN(d.getTime())) return '';
-  // for datetime-local input -> yyyy-MM-ddTHH:mm
-  const iso = d.toISOString();
-  return iso.slice(0, 16);
-}
+// Date utility functions moved to utils/frontendDateUtils.ts
 
 export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) => {
   const [newPin, setNewPin] = useState('');
@@ -66,12 +60,21 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
     setLoading(true);
     
     try {
-      // call backend
+      // Prepare payload with safe date conversion
       const payload: any = { newPin };
+      
       if (expireLocal) {
-        // convert back to ISO
-        const d = new Date(expireLocal);
-        if (!Number.isNaN(d.getTime())) payload.expireAt = d.toISOString();
+        const isoDate = fromInputDateTimeLocal(expireLocal);
+        if (isoDate) {
+          payload.expireAt = isoDate;
+        } else {
+          setError('Invalid expiry date format');
+          setLoading(false);
+          return;
+        }
+      } else {
+        // Explicitly set to null if no expiry date
+        payload.expireAt = null;
       }
 
       const resp = await adminApiService.updateTeamPin(pin.id, payload);
@@ -167,7 +170,13 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
             />
             {expireLocal && (
               <p className="text-xs text-muted-foreground mt-1">
-                PIN will expire on {new Date(expireLocal).toLocaleString()}
+                PIN will expire on {(() => {
+                  try {
+                    return new Date(expireLocal).toLocaleString();
+                  } catch {
+                    return 'Invalid date';
+                  }
+                })()}
               </p>
             )}
           </div>
@@ -190,10 +199,10 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Saving...
+                  Updating PIN...
                 </>
               ) : (
-                'Save PIN'
+                'Update PIN'
               )}
             </Button>
           </div>
