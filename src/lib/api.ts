@@ -175,6 +175,7 @@ export interface Label {
   location_id: string;
   created_at?: string;
   updated_at?: string;
+  sent_count?: number;
 }
 
 export interface LabelCreatePayload {
