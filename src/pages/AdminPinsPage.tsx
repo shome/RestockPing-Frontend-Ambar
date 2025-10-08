@@ -69,10 +69,13 @@ const AdminPinsPage: React.FC = () => {
       const response = await adminApiService.getPins('team');
       console.log('📥 Received team pins data:', response.pins);
       
-      // Debug: Log each pin's expire_at value
+      // Debug: Log each pin's expire_at and location_id values
       response.pins.forEach((pin, index) => {
         console.log(`PIN ${index + 1} (${pin.pin}):`, {
           expire_at: pin.expire_at,
+          location_id: pin.location_id,
+          location_name: pin.location_name,
+          hasLocationId: !!pin.location_id,
           type: typeof pin.expire_at,
           isNull: pin.expire_at === null,
           isUndefined: pin.expire_at === undefined,
@@ -179,6 +182,17 @@ const AdminPinsPage: React.FC = () => {
     try {
       setIsLoading(true);
       
+      // Check if location_id exists
+      if (!pin.location_id) {
+        toast({
+          title: "Cannot rotate PIN",
+          description: "Location ID is missing from PIN data",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       // Generate a new random PIN
       const newPin = Math.floor(1000 + Math.random() * 9000).toString();
       
@@ -187,7 +201,7 @@ const AdminPinsPage: React.FC = () => {
       
       // Create a new PIN for the same location
       const response = await adminApiService.createTeamPin(
-        pin.location_id || 'default-location', // You might need to store location_id in AdminPinEntry
+        pin.location_id,
         newPin,
         pin.expire_at
       );
