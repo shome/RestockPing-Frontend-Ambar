@@ -67,6 +67,20 @@ const AdminPinsPage: React.FC = () => {
   const fetchPins = async () => {
     try {
       const response = await adminApiService.getPins('team');
+      console.log('📥 Received team pins data:', response.pins);
+      
+      // Debug: Log each pin's expire_at value
+      response.pins.forEach((pin, index) => {
+        console.log(`PIN ${index + 1} (${pin.pin}):`, {
+          expire_at: pin.expire_at,
+          type: typeof pin.expire_at,
+          isNull: pin.expire_at === null,
+          isUndefined: pin.expire_at === undefined,
+          isEmpty: pin.expire_at === '',
+          isNullString: pin.expire_at === 'null'
+        });
+      });
+      
       setTeamPins(response.pins);
     } catch (error: any) {
       console.error('Error fetching team pins:', error);
