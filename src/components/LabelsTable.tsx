@@ -284,6 +284,7 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
                     <TableHead>Code</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Synonyms</TableHead>
+                    <TableHead>Subscribers</TableHead>
                     <TableHead>Messages Sent</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -297,8 +298,11 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
                       <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
                         {label.synonyms || '-'}
                       </TableCell>
-                      <TableCell className="text-sm">
-                        {label.sent_count ?? 0}
+                      <TableCell className="text-center font-mono text-sm">
+                        {label.subscribers_count ?? 0}
+                      </TableCell>
+                      <TableCell className="text-center font-mono text-sm">
+                        {label.total_sends ?? label.sent_count ?? 0}
                       </TableCell>
                       <TableCell>
                         <Badge variant={label.active ? "default" : "secondary"}>

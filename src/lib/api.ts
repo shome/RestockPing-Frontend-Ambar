@@ -176,6 +176,10 @@ export interface Label {
   created_at?: string;
   updated_at?: string;
   sent_count?: number;
+  total_sends?: number;
+  subscribers_count?: number;
+  hasSubscribersCount?: boolean;
+  subscribersCountType?: string;
 }
 
 export interface LabelCreatePayload {
