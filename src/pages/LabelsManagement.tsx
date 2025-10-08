@@ -39,17 +39,18 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
     try {
       setIsLoading(true);
       
-      // MOCK DATA - Comment out when API is ready
-      await mockDelay(800); // Simulate API delay
-      setLabels([...mockLabels]);
+      // ACTUAL API CODE - Now enabled
+      const response = await apiService.fetchLabels(100, 0); // Get first 100 labels
+      if (response.success) {
+        console.log('🔍 API Response:', response.labels);
+        setLabels(response.labels);
+      } else {
+        throw new Error('Failed to fetch labels');
+      }
       
-      // ACTUAL API CODE - Uncomment when API is ready
-      // const response = await apiService.fetchLabels(100, 0); // Get first 100 labels
-      // if (response.success) {
-      //   setLabels(response.labels);
-      // } else {
-      //   throw new Error('Failed to fetch labels');
-      // }
+      // MOCK DATA - Fallback if API fails
+      // await mockDelay(800); // Simulate API delay
+      // setLabels([...mockLabels]);
     } catch (error: any) {
       console.error('Error fetching labels:', error);
       const errorMessage = error.response?.data?.message || error.message || "Failed to load labels. Please try again.";
@@ -58,6 +59,11 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
         description: errorMessage,
         variant: "destructive",
       });
+      
+      // Fallback to mock data if API fails
+      console.log('🔄 Falling back to mock data');
+      await mockDelay(800);
+      setLabels([...mockLabels]);
     } finally {
       setIsLoading(false);
     }

@@ -76,6 +76,11 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
     label.synonyms.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Debug: Log the first label to check data structure
+  if (filteredLabels.length > 0) {
+    console.log('🔍 First label data:', filteredLabels[0]);
+  }
+
   const handleEdit = (label: Label) => {
     setEditingLabel({
       id: label.id,
@@ -302,7 +307,7 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
                         {label.subscribers_count ?? 0}
                       </TableCell>
                       <TableCell className="text-center font-mono text-sm">
-                        {label.total_sends ?? label.sent_count ?? 0}
+                        {label.sent_count ?? label.total_sends ?? 0}
                       </TableCell>
                       <TableCell>
                         <Badge variant={label.active ? "default" : "secondary"}>
