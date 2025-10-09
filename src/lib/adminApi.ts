@@ -566,49 +566,28 @@ export const adminApiService = {
   /**
    * Create team PIN
    * @param locationId - UUID of the location
-   * @param pin - PIN code to create (must be 4 digits)
+   * @param pin - PIN code to create
    * @param expireAt - Optional expiration date in ISO format
    */
   createTeamPin: async (locationId: string, pin: string, expireAt?: string): Promise<AdminTeamPinResponse> => {
     try {
-      // Validate PIN format before sending
-      if (!/^\d{4}$/.test(pin)) {
-        throw new Error('PIN must be exactly 4 digits');
-      }
-
-      const payload: any = {
-        pin: pin,
-        locationId: locationId
-      };
-      
-      // Only add expireAt if it's provided and not empty
-      if (expireAt && expireAt.trim() !== '') {
-        payload.expireAt = expireAt;
-      }
-
-      console.log('📤 Creating team PIN with payload:', payload);
-      
       const response = await adminApiClient.post<AdminTeamPinResponse>(
-        '/api/admin/pins',
+        '/api/admin/team-pins',
         {
           action: "create",
-          type: "team",
-          ...payload
+          locationId,
+          pin,
+          expireAt
         }
       );
 
-      console.log('✅ Team PIN created successfully:', response.data);
+      console.log('✅ Team PIN created:', response.data);
       return response.data;
       
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
-      console.error('❌ Error creating team PIN:', {
-        error: errorMessage,
-        pin: pin,
-        locationId: locationId,
-        expireAt: expireAt
-      });
-      throw new Error(errorMessage);
+      console.error('❌ Error creating team PIN:', errorMessage);
+      throw new Error('Failed to create PIN: ' + errorMessage);
     }
   },
 

@@ -15,6 +15,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { CountrySelect } from "@/components/ui/country-select";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useCaptchaThrottle } from "@/hooks/useCaptchaThrottle";
+import { incrementSubscriberCount, addCustomProductSubscription } from "@/lib/mockLabelsData";
 
 type Step = 'search' | 'phone' | 'success';
 
@@ -23,19 +24,6 @@ interface CustomerFlowProps {
 }
 
 const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
-  // 🔍 Debug locationId on component mount
-  React.useEffect(() => {
-    console.log('🔍 CustomerFlow Debug:', {
-      locationId,
-      locationIdType: typeof locationId,
-      locationIdLength: locationId?.length,
-      isLocationIdTruthy: !!locationId,
-      isLocationIdNull: locationId === null,
-      isLocationIdUndefined: locationId === undefined,
-      isLocationIdEmptyString: locationId === ''
-    });
-  }, [locationId]);
-
   const [step, setStep] = useState<Step>('search');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -179,27 +167,6 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
       return;
     }
 
-    // Additional validation for selected product
-    if (!isCustomProduct && selectedProduct) {
-      if (!selectedProduct.id && !selectedProduct.name) {
-        toast({
-          title: "Invalid product selection",
-          description: "Selected product is missing required information. Please select again.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    if (!isCustomProduct && !selectedProduct) {
-      toast({
-        title: "No product selected",
-        description: "Please select a product or choose 'Can't find this product'.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     // Process the request via API
     const fullPhoneNumber = selectedCountry.dialCode + phone;
     
@@ -214,40 +181,19 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
       return;
     }
 
-    // Validate location ID
-    console.log('🔍 Location ID Validation:', {
-      locationId,
-      locationIdType: typeof locationId,
-      isLocationIdTruthy: !!locationId,
-      isLocationIdNull: locationId === null,
-      isLocationIdUndefined: locationId === undefined,
-      isLocationIdEmptyString: locationId === '',
-      validationWillFail: !locationId
-    });
-
-    if (!locationId) {
-      console.error('❌ Location ID validation failed:', {
-        locationId,
-        currentURL: window.location.href,
-        searchParams: new URLSearchParams(window.location.search).get('location')
-      });
-      
-      toast({
-        title: "Location error",
-        description: `Location ID is required. Current: "${locationId}"`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
+      // Use provided locationId or default value
+      const finalLocationId = locationId || 'default-location-id';
+      
       // Proceed with the main request (captcha is already verified)
       const payload: CreateRequestPayload = {
-        locationId: locationId,
+        locationId: finalLocationId,
         phone: fullPhoneNumber,
       };
+
+      console.log('API Payload:', payload);
 
       if (isCustomProduct) {
         // Custom product request
@@ -255,50 +201,23 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
         if (uploadedImage) {
           payload.image = uploadedImage;
         }
-        console.log('🔧 Submitting custom product request:', {
-          labelName: payload.labelName,
-          hasImage: !!uploadedImage
-        });
       } else if (selectedProduct) {
-        // Existing product request - with enhanced validation
-        if (selectedProduct.id && selectedProduct.id.trim() !== '') {
-          payload.labelId = selectedProduct.id;
-          console.log('✅ Submitting with labelId:', selectedProduct.id);
-        } else {
-          // Fallback: use product name if ID is missing
-          payload.labelName = selectedProduct.name;
-          console.warn('⚠️ selectedProduct.id is undefined/empty, using labelName fallback:', selectedProduct.name);
-        }
-        
-        console.log('🔧 Selected product details:', {
-          id: selectedProduct.id,
-          name: selectedProduct.name,
-          code: selectedProduct.code,
-          payloadLabelId: payload.labelId,
-          payloadLabelName: payload.labelName
-        });
+        // Existing product request
+        payload.labelId = selectedProduct.id;
       }
-
-      console.log('📤 Final API Payload:', payload);
 
       const response = await apiService.createRequest(payload);
       
       if (response.success) {
-        console.log('✅ Request submitted successfully:', response);
-        
         // Store the success message from API response
         setSuccessMessage(response.message || 'Request submitted successfully!');
         
-        // 🔄 Trigger a global event to notify other components about the counter update
-        // This will help Labels Management refresh if it's open in another tab/window
-        window.dispatchEvent(new CustomEvent('labelCounterUpdated', {
-          detail: {
-            requestId: response.data?.id,
-            labelId: payload.labelId,
-            labelName: payload.labelName,
-            timestamp: new Date().toISOString()
-          }
-        }));
+        // Simulate incrementing subscriber count for mock data
+        if (selectedProduct) {
+          incrementSubscriberCount(selectedProduct.id);
+        } else if (isCustomProduct && customProductName) {
+          addCustomProductSubscription(customProductName);
+        }
         
         setStep('success');
       } else {

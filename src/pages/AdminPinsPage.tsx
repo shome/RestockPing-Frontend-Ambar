@@ -26,7 +26,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { adminApiService, AdminPinEntry, AdminLocationsResponse } from '@/lib/adminApi';
 import AdminNavigation from '@/components/AdminNavigation';
 import { EditPinModal } from '@/components/EditPinModal';
-import { formatDateDisplay, getExpiryStatus } from '@/utils/frontendDateUtils';
 
 const AdminPinsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -67,23 +66,6 @@ const AdminPinsPage: React.FC = () => {
   const fetchPins = async () => {
     try {
       const response = await adminApiService.getPins('team');
-      console.log('📥 Received team pins data:', response.pins);
-      
-      // Debug: Log each pin's expire_at and location_id values
-      response.pins.forEach((pin, index) => {
-        console.log(`PIN ${index + 1} (${pin.pin}):`, {
-          expire_at: pin.expire_at,
-          location_id: pin.location_id,
-          location_name: pin.location_name,
-          hasLocationId: !!pin.location_id,
-          type: typeof pin.expire_at,
-          isNull: pin.expire_at === null,
-          isUndefined: pin.expire_at === undefined,
-          isEmpty: pin.expire_at === '',
-          isNullString: pin.expire_at === 'null'
-        });
-      });
-      
       setTeamPins(response.pins);
     } catch (error: any) {
       console.error('Error fetching team pins:', error);
@@ -119,22 +101,10 @@ const AdminPinsPage: React.FC = () => {
   };
 
   const handleCreateTeamPin = async () => {
-    // Validate required fields
     if (!teamPinForm.locationId || !teamPinForm.pin) {
       toast({
         title: "Missing information",
         description: "Please enter a PIN and select a location",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate PIN format (exactly 4 digits)
-    const pinRegex = /^\d{4}$/;
-    if (!pinRegex.test(teamPinForm.pin)) {
-      toast({
-        title: "Invalid PIN format",
-        description: "PIN must be exactly 4 digits (e.g., 1234)",
         variant: "destructive",
       });
       return;
@@ -182,17 +152,6 @@ const AdminPinsPage: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Check if location_id exists
-      if (!pin.location_id) {
-        toast({
-          title: "Cannot rotate PIN",
-          description: "Location ID is missing from PIN data",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-      
       // Generate a new random PIN
       const newPin = Math.floor(1000 + Math.random() * 9000).toString();
       
@@ -201,7 +160,7 @@ const AdminPinsPage: React.FC = () => {
       
       // Create a new PIN for the same location
       const response = await adminApiService.createTeamPin(
-        pin.location_id,
+        pin.location_id || 'default-location', // You might need to store location_id in AdminPinEntry
         newPin,
         pin.expire_at
       );
@@ -299,7 +258,62 @@ const AdminPinsPage: React.FC = () => {
   };
 
 
-  // Date formatting functions moved to utils/frontendDateUtils.ts
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
+  const isExpired = (expireAt: string) => {
+    try {
+      const date = new Date(expireAt);
+      if (isNaN(date.getTime())) {
+        return false; // Invalid dates are not considered expired
+      }
+      return date < new Date();
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const getExpiryStatus = (expireAt: string, status?: string) => {
+    if (status === 'disabled') {
+      return { status: 'disabled', color: 'text-gray-600', badge: 'secondary' as const };
+    }
+    
+    try {
+      const now = new Date();
+      const expiry = new Date(expireAt);
+      
+      if (isNaN(expiry.getTime())) {
+        return { status: 'invalid', color: 'text-orange-600', badge: 'secondary' as const };
+      }
+      
+      const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntilExpiry < 0) {
+        return { status: 'expired', color: 'text-red-600', badge: 'destructive' as const };
+      } else if (daysUntilExpiry <= 7) {
+        return { status: 'expiring', color: 'text-yellow-600', badge: 'secondary' as const };
+      } else {
+        return { status: 'active', color: 'text-green-600', badge: 'default' as const };
+      }
+    } catch (error) {
+      return { status: 'invalid', color: 'text-orange-600', badge: 'secondary' as const };
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -361,24 +375,17 @@ const AdminPinsPage: React.FC = () => {
                       <div className="space-y-4">
                         <div>
                           <Label htmlFor="pin" className="block text-sm font-medium text-gray-700">
-                            Enter 4-Digit PIN for Team Access
+                            Enter PIN for Team Access
                           </Label>
                           <Input
                             type="text"
                             id="pin"
                             name="pin"
-                            maxLength={4}
-                            pattern="\d{4}"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm font-mono text-center text-lg"
+                            maxLength={6}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             value={teamPinForm.pin}
-                            onChange={(e) => {
-                              // Only allow numeric input
-                              const value = e.target.value.replace(/\D/g, '');
-                              if (value.length <= 4) {
-                                setTeamPinForm({ ...teamPinForm, pin: value });
-                              }
-                            }}
-                            placeholder="1234"
+                            onChange={(e) => setTeamPinForm({ ...teamPinForm, pin: e.target.value })}
+                            placeholder="Enter a PIN e.g. 5678"
                           />
                         </div>
                         <div>
@@ -476,7 +483,7 @@ const AdminPinsPage: React.FC = () => {
                             <div className="text-right">
                               <p className="text-sm text-muted-foreground">Expires</p>
                               <p className={`text-sm ${expiryStatus.color}`}>
-                                {formatDateDisplay(pin.expire_at)}
+                                {pin.expire_at ? formatDate(pin.expire_at) : 'No expiry'}
                               </p>
                             </div>
                             <Badge variant={expiryStatus.badge}>
