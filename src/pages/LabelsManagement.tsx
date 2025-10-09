@@ -66,10 +66,26 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
       if (showLoading) setIsLoading(true);
       
       // ACTUAL API CODE - Now enabled with higher limit
-      const response = await apiService.fetchLabels(500, 0); // Get first 500 labels
+      // Use admin API for management interface
+      const { adminApiService } = await import('@/lib/adminApi');
+      const response = await adminApiService.getLabels('', 500, 0); // Get first 500 labels
       if (response.success) {
         console.log('🔍 API Response:', response.labels);
-        setLabels(response.labels);
+        // Convert AdminLabel[] to Label[] format
+        const convertedLabels = response.labels.map(adminLabel => ({
+          id: adminLabel.id,
+          code: adminLabel.code,
+          name: adminLabel.name,
+          synonyms: adminLabel.synonyms,
+          active: adminLabel.active,
+          location_id: adminLabel.location_id,
+          subscribers_count: adminLabel.subscribers_count,
+          total_sends: adminLabel.total_sends,
+          sent_count: adminLabel.total_sends, // Alias for compatibility
+          created_at: new Date().toISOString(), // Default value
+          updated_at: new Date().toISOString()  // Default value
+        }));
+        setLabels(convertedLabels);
         
         // 🔄 Log counter info for debugging
         const labelsWithCounters = response.labels.filter(l => l.subscribers_count > 0 || l.total_sends > 0);

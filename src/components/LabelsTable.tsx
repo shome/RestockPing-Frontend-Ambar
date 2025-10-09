@@ -135,7 +135,14 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
           active: editingLabel.active
         };
 
-        await apiService.updateLabel(updatePayload);
+        // Use admin API for label updates
+        const { adminApiService } = await import('@/lib/adminApi');
+        await adminApiService.updateLabel(editingLabel.id, {
+          name: editingLabel.name.trim(),
+          synonyms: editingLabel.synonyms.trim(),
+          active: editingLabel.active
+          // Note: code cannot be updated via admin API
+        });
         
         toast({
           title: "Label updated",
@@ -150,7 +157,10 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
           active: editingLabel.active
         };
 
-        await apiService.createLabel(createPayload);
+        // Use admin API for label creation
+        const { adminApiService } = await import('@/lib/adminApi');
+        // Note: Admin API doesn't have createLabel, so show appropriate message
+        throw new Error('Label creation should be done via CSV upload or admin panel');
         
         toast({
           title: "Label created",
@@ -184,8 +194,10 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
     setIsSubmitting(true);
 
     try {
-      // ACTUAL API CODE - Now enabled
-      await apiService.deleteLabel({ id: labelToDelete.id });
+      // Use admin API for label deletion
+      const { adminApiService } = await import('@/lib/adminApi');
+      // Note: Admin API doesn't have deleteLabel, so show appropriate message
+      throw new Error('Label deletion should be done via admin panel');
       
       toast({
         title: "Label deleted",
