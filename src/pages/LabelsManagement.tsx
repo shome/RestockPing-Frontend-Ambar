@@ -46,6 +46,21 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Listen for global counter update events from customer requests
+  useEffect(() => {
+    const handleCounterUpdate = (event: CustomEvent) => {
+      console.log('🔔 Received counter update event:', event.detail);
+      console.log('🔄 Refreshing labels due to customer request...');
+      fetchLabels(false); // Silent refresh when customer submits request
+    };
+
+    window.addEventListener('labelCounterUpdated', handleCounterUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('labelCounterUpdated', handleCounterUpdate as EventListener);
+    };
+  }, []);
+
   const fetchLabels = async (showLoading = true) => {
     try {
       if (showLoading) setIsLoading(true);
