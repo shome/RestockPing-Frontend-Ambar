@@ -166,6 +166,27 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
       return;
     }
 
+    // Additional validation for selected product
+    if (!isCustomProduct && selectedProduct) {
+      if (!selectedProduct.id && !selectedProduct.name) {
+        toast({
+          title: "Invalid product selection",
+          description: "Selected product is missing required information. Please select again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (!isCustomProduct && !selectedProduct) {
+      toast({
+        title: "No product selected",
+        description: "Please select a product or choose 'Can't find this product'.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Process the request via API
     const fullPhoneNumber = selectedCountry.dialCode + phone;
     
@@ -199,18 +220,37 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
         phone: fullPhoneNumber,
       };
 
-      console.log('API Payload:', payload);
-
       if (isCustomProduct) {
         // Custom product request
         payload.labelName = customProductName;
         if (uploadedImage) {
           payload.image = uploadedImage;
         }
+        console.log('🔧 Submitting custom product request:', {
+          labelName: payload.labelName,
+          hasImage: !!uploadedImage
+        });
       } else if (selectedProduct) {
-        // Existing product request
-        payload.labelId = selectedProduct.id;
+        // Existing product request - with enhanced validation
+        if (selectedProduct.id && selectedProduct.id.trim() !== '') {
+          payload.labelId = selectedProduct.id;
+          console.log('✅ Submitting with labelId:', selectedProduct.id);
+        } else {
+          // Fallback: use product name if ID is missing
+          payload.labelName = selectedProduct.name;
+          console.warn('⚠️ selectedProduct.id is undefined/empty, using labelName fallback:', selectedProduct.name);
+        }
+        
+        console.log('🔧 Selected product details:', {
+          id: selectedProduct.id,
+          name: selectedProduct.name,
+          code: selectedProduct.code,
+          payloadLabelId: payload.labelId,
+          payloadLabelName: payload.labelName
+        });
       }
+
+      console.log('📤 Final API Payload:', payload);
 
       const response = await apiService.createRequest(payload);
       

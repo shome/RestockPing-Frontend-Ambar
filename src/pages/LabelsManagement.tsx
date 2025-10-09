@@ -18,6 +18,7 @@ import { apiService, Label, CSVUploadResponse } from '@/lib/api';
 import { mockLabels, createMockCSVUploadResponse, generateMockCSVData, mockDelay } from '@/lib/mockLabelsData';
 import CSVUpload from '@/components/CSVUpload';
 import LabelsTable from '@/components/LabelsTable';
+import RequestForm from '@/components/RequestForm';
 
 interface LabelsManagementProps {
   onBack: () => void;
@@ -219,6 +220,10 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
               <Upload className="h-4 w-4" />
               CSV Upload
             </TabsTrigger>
+            <TabsTrigger value="request" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Test Request
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="table" className="space-y-4">
@@ -234,6 +239,34 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
               onUploadComplete={handleUploadComplete}
               onRefresh={fetchLabels}
             />
+          </TabsContent>
+
+          <TabsContent value="request" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <RequestForm onRequestCreated={fetchLabels} />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Counter Test Instructions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 text-sm">
+                    <p>Use this form to test automatic counter updates:</p>
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li>Fill in the form with valid data</li>
+                      <li>Submit the request</li>
+                      <li>Check the Labels Table - counters should update automatically</li>
+                      <li>The subscribers_count and total_sends will increment</li>
+                    </ol>
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="font-medium text-blue-900">Note:</p>
+                      <p className="text-blue-800">
+                        Each request automatically creates an optin record and updates the label counters in real-time.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
 
