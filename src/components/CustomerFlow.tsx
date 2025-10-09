@@ -15,6 +15,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { CountrySelect } from "@/components/ui/country-select";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useCaptchaThrottle } from "@/hooks/useCaptchaThrottle";
+import { incrementSubscriberCount, addCustomProductSubscription } from "@/lib/mockLabelsData";
 
 type Step = 'search' | 'phone' | 'success';
 
@@ -138,14 +139,15 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
       return;
     }
 
-    if (isCustomProduct && (!isImageValid || !uploadedImage)) {
-      toast({
-        title: "Image required",
-        description: "Please upload an image before proceeding.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Image is now optional for custom products
+    // if (isCustomProduct && (!isImageValid || !uploadedImage)) {
+    //   toast({
+    //     title: "Image required",
+    //     description: "Please upload an image before proceeding.",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     if (!isPhoneValid || !phone.trim() || !selectedCountry) {
       toast({
@@ -179,22 +181,15 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
       return;
     }
 
-    // Validate location ID
-    if (!locationId) {
-      toast({
-        title: "Location error",
-        description: "Location ID is required.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
+      // Use provided locationId or default value
+      const finalLocationId = locationId || 'default-location-id';
+      
       // Proceed with the main request (captcha is already verified)
       const payload: CreateRequestPayload = {
-        locationId: locationId,
+        locationId: finalLocationId,
         phone: fullPhoneNumber,
       };
 
@@ -216,6 +211,14 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
       if (response.success) {
         // Store the success message from API response
         setSuccessMessage(response.message || 'Request submitted successfully!');
+        
+        // Simulate incrementing subscriber count for mock data
+        if (selectedProduct) {
+          incrementSubscriberCount(selectedProduct.id);
+        } else if (isCustomProduct && customProductName) {
+          addCustomProductSubscription(customProductName);
+        }
+        
         setStep('success');
       } else {
         throw new Error(response.message || 'Request failed');
@@ -378,7 +381,7 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
               {/* Image Upload - Only for custom products */}
               {isCustomProduct && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Upload Image (Required)</label>
+                  <label className="text-sm font-medium">Upload Image (Optional)</label>
                   <ImageUpload
                     value={uploadedImage}
                     onChange={setUploadedImage}
@@ -459,12 +462,9 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
                     !captchaSessionId || 
                     captchaAnswer === null ||
                     !isPhoneValid ||
-                    // Image requirement only for custom products
-                    (isCustomProduct && !isImageValid) ||
                     // Additional requirements
                     !phone.trim() || 
                     !selectedCountry ||
-                    (isCustomProduct && !uploadedImage) ||
                     isThrottled ||
                     (isCustomProduct && !customProductName.trim()) ||
                     // Loading state

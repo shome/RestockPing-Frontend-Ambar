@@ -284,7 +284,11 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
                     <TableHead>Code</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Synonyms</TableHead>
+                    <TableHead>Location</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Subscriptions</TableHead>
+                    <TableHead>Total Sends</TableHead>
+                    <TableHead>Last Sent</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -295,6 +299,9 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
                       <TableCell className="font-medium">{label.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
                         {label.synonyms || '-'}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {label.location_name || '-'}
                       </TableCell>
                       <TableCell>
                         <Badge variant={label.active ? "default" : "secondary"}>
@@ -310,6 +317,19 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
                             </>
                           )}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {label.subscribers_count || 0}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          {label.total_sends || 0}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {label.last_sent ? new Date(label.last_sent).toLocaleDateString() : 'Never'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">

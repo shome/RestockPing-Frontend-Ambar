@@ -173,6 +173,10 @@ export interface Label {
   synonyms: string;
   active: boolean;
   location_id: string;
+  location_name?: string;
+  subscribers_count?: number;
+  total_sends?: number;
+  last_sent?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -649,6 +653,27 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching labels:', error);
+      const apiError = ApiErrorHandler.getErrorDetails(error);
+      throw new Error(apiError.message);
+    }
+  },
+
+  /**
+   * Fetch admin labels with statistics (subscribers count, sends count, etc.)
+   * @param limit - Number of labels to fetch (default: 50)
+   * @param page - Page number (default: 1)
+   * @param search - Optional search query
+   * @returns Promise with labels list response including statistics
+   */
+  fetchAdminLabels: async (limit: number = 50, page: number = 1, search?: string): Promise<LabelsListResponse> => {
+    try {
+      const params: any = { limit, page };
+      if (search) params.query = search;
+      
+      const response = await apiClient.get<LabelsListResponse>('/api/admin/labels', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching admin labels:', error);
       const apiError = ApiErrorHandler.getErrorDetails(error);
       throw new Error(apiError.message);
     }

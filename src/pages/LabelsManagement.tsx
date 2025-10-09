@@ -11,7 +11,9 @@ import {
   RefreshCw,
   Loader2,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Users,
+  Send
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiService, Label, CSVUploadResponse } from '@/lib/api';
@@ -44,7 +46,7 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
       setLabels([...mockLabels]);
       
       // ACTUAL API CODE - Uncomment when API is ready
-      // const response = await apiService.fetchLabels(100, 0); // Get first 100 labels
+      // const response = await apiService.fetchAdminLabels(100, 1); // Get first 100 labels with statistics
       // if (response.success) {
       //   setLabels(response.labels);
       // } else {
@@ -102,6 +104,8 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
 
   const activeLabelsCount = labels.filter(label => label.active).length;
   const inactiveLabelsCount = labels.filter(label => !label.active).length;
+  const totalSubscribers = labels.reduce((sum, label) => sum + (label.subscribers_count || 0), 0);
+  const totalSends = labels.reduce((sum, label) => sum + (label.total_sends || 0), 0);
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -146,7 +150,7 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Labels</CardTitle>
@@ -182,6 +186,32 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
               <div className="text-2xl font-bold text-orange-600">{inactiveLabelsCount}</div>
               <p className="text-xs text-muted-foreground">
                 Hidden from search
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Subscribers</CardTitle>
+              <Users className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{totalSubscribers}</div>
+              <p className="text-xs text-muted-foreground">
+                Active subscriptions
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Sends</CardTitle>
+              <Send className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">{totalSends}</div>
+              <p className="text-xs text-muted-foreground">
+                Messages sent
               </p>
             </CardContent>
           </Card>

@@ -18,6 +18,8 @@ import AdminPinsPage from "./pages/AdminPinsPage";
 import AdminRequestsPage from "./pages/AdminRequestsPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LocationOptIn from "./components/LocationOptIn";
+import TestLinks from "./pages/TestLinks";
 
 const queryClient = new QueryClient();
 
@@ -26,11 +28,13 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/" element={<OptIn />} />
           <Route path="/optin" element={<OptIn />} />
           <Route path="/index" element={<Index />} />
+          <Route path="/location/:locationId" element={<LocationOptIn />} />
+          <Route path="/test-links" element={<TestLinks />} />
           <Route path="/team" element={<TeamPage />} />
           <Route path="/team/login" element={<TeamLoginPage />} />
           <Route 
@@ -44,9 +48,7 @@ const App = () => (
           <Route 
             path="/team/labels" 
             element={
-              // <ProtectedRoute>
-                <LabelsManagement onBack={() => window.history.back()} />
-              // </ProtectedRoute>S
+              <LabelsManagement onBack={() => window.history.back()} />
             } 
           />
           <Route path="/team-management" element={<TeamManagement onLogout={() => window.location.href = '/'} />} />

@@ -5,6 +5,9 @@ const OptIn = () => {
   const [searchParams] = useSearchParams();
   const location = searchParams.get('location');
 
+  // Log the location parameter for debugging
+  console.log('Location parameter from URL:', location);
+
   return (
     <div>
       <CustomerFlow locationId={location} />
