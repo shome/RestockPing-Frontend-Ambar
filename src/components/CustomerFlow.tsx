@@ -23,6 +23,19 @@ interface CustomerFlowProps {
 }
 
 const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
+  // 🔍 Debug locationId on component mount
+  React.useEffect(() => {
+    console.log('🔍 CustomerFlow Debug:', {
+      locationId,
+      locationIdType: typeof locationId,
+      locationIdLength: locationId?.length,
+      isLocationIdTruthy: !!locationId,
+      isLocationIdNull: locationId === null,
+      isLocationIdUndefined: locationId === undefined,
+      isLocationIdEmptyString: locationId === ''
+    });
+  }, [locationId]);
+
   const [step, setStep] = useState<Step>('search');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -202,10 +215,26 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
     }
 
     // Validate location ID
+    console.log('🔍 Location ID Validation:', {
+      locationId,
+      locationIdType: typeof locationId,
+      isLocationIdTruthy: !!locationId,
+      isLocationIdNull: locationId === null,
+      isLocationIdUndefined: locationId === undefined,
+      isLocationIdEmptyString: locationId === '',
+      validationWillFail: !locationId
+    });
+
     if (!locationId) {
+      console.error('❌ Location ID validation failed:', {
+        locationId,
+        currentURL: window.location.href,
+        searchParams: new URLSearchParams(window.location.search).get('location')
+      });
+      
       toast({
         title: "Location error",
-        description: "Location ID is required.",
+        description: `Location ID is required. Current: "${locationId}"`,
         variant: "destructive",
       });
       return;
