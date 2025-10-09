@@ -36,15 +36,35 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
     fetchLabels();
   }, []);
 
-  const fetchLabels = async () => {
+  // Auto-refresh every 30 seconds to keep counters updated
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing labels for counter updates...');
+      fetchLabels(false); // Silent refresh without loading indicator
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchLabels = async (showLoading = true) => {
     try {
-      setIsLoading(true);
+      if (showLoading) setIsLoading(true);
       
-      // ACTUAL API CODE - Now enabled
-      const response = await apiService.fetchLabels(100, 0); // Get first 100 labels
+      // ACTUAL API CODE - Now enabled with higher limit
+      const response = await apiService.fetchLabels(500, 0); // Get first 500 labels
       if (response.success) {
         console.log('🔍 API Response:', response.labels);
         setLabels(response.labels);
+        
+        // 🔄 Log counter info for debugging
+        const labelsWithCounters = response.labels.filter(l => l.subscribers_count > 0 || l.total_sends > 0);
+        if (labelsWithCounters.length > 0) {
+          console.log('📊 Labels with counters:', labelsWithCounters.map(l => ({
+            name: l.name,
+            subscribers: l.subscribers_count,
+            sends: l.total_sends
+          })));
+        }
       } else {
         throw new Error('Failed to fetch labels');
       }
@@ -66,8 +86,13 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
       await mockDelay(800);
       setLabels([...mockLabels]);
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
+  };
+
+  // Wrapper function for refresh button
+  const handleRefresh = () => {
+    fetchLabels(true);
   };
 
   const handleUploadComplete = (response: CSVUploadResponse) => {
@@ -139,7 +164,7 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
             </Button>
             <Button
               variant="outline"
-              onClick={fetchLabels}
+              onClick={handleRefresh}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -243,7 +268,10 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
 
           <TabsContent value="request" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <RequestForm onRequestCreated={fetchLabels} />
+              <RequestForm onRequestCreated={() => {
+                console.log('🔄 Request created, refreshing labels...');
+                fetchLabels(false); // Silent refresh after request creation
+              }} />
               <Card>
                 <CardHeader>
                   <CardTitle>Counter Test Instructions</CardTitle>

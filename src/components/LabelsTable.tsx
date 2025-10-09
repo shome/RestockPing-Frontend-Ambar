@@ -124,66 +124,48 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
     setIsSubmitting(true);
 
     try {
-      // MOCK DATA - Comment out when API is ready
-      await mockDelay(1000); // Simulate API delay
-      
+      // ACTUAL API CODE - Now enabled
       if (editingLabel.id) {
-        // Update existing label - Mock success
+        // Update existing label
+        const updatePayload: LabelUpdatePayload = {
+          id: editingLabel.id,
+          code: editingLabel.code.trim(),
+          name: editingLabel.name.trim(),
+          synonyms: editingLabel.synonyms.trim(),
+          active: editingLabel.active
+        };
+
+        await apiService.updateLabel(updatePayload);
+        
         toast({
           title: "Label updated",
           description: "The label has been updated successfully.",
         });
       } else {
-        // Create new label - Mock success
+        // Create new label
+        const createPayload: LabelCreatePayload = {
+          code: editingLabel.code.trim(),
+          name: editingLabel.name.trim(),
+          synonyms: editingLabel.synonyms.trim(),
+          active: editingLabel.active
+        };
+
+        await apiService.createLabel(createPayload);
+        
         toast({
           title: "Label created",
           description: "The new label has been created successfully.",
         });
       }
 
+      // Refresh the labels list to show updated data
       onRefresh();
       setIsEditDialogOpen(false);
       setIsCreateDialogOpen(false);
       setEditingLabel(null);
       
-      // ACTUAL API CODE - Uncomment when API is ready
-      // if (editingLabel.id) {
-      //   // Update existing label
-      //   const updatePayload: LabelUpdatePayload = {
-      //     id: editingLabel.id,
-      //     code: editingLabel.code.trim(),
-      //     name: editingLabel.name.trim(),
-      //     synonyms: editingLabel.synonyms.trim(),
-      //     active: editingLabel.active
-      //   };
-      // 
-      //   await apiService.updateLabel(updatePayload);
-      //   
-      //   toast({
-      //     title: "Label updated",
-      //     description: "The label has been updated successfully.",
-      //   });
-      // } else {
-      //   // Create new label
-      //   const createPayload: LabelCreatePayload = {
-      //     code: editingLabel.code.trim(),
-      //     name: editingLabel.name.trim(),
-      //     synonyms: editingLabel.synonyms.trim(),
-      //     active: editingLabel.active
-      //   };
-      // 
-      //   await apiService.createLabel(createPayload);
-      //   
-      //   toast({
-      //     title: "Label created",
-      //     description: "The new label has been created successfully.",
-      //   });
-      // }
-      // 
-      // onRefresh();
-      // setIsEditDialogOpen(false);
-      // setIsCreateDialogOpen(false);
-      // setEditingLabel(null);
+      // MOCK DATA - Disabled
+      // await mockDelay(1000); // Simulate API delay
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to save label.";
       toast({
@@ -202,29 +184,21 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
     setIsSubmitting(true);
 
     try {
-      // MOCK DATA - Comment out when API is ready
-      await mockDelay(800); // Simulate API delay
+      // ACTUAL API CODE - Now enabled
+      await apiService.deleteLabel({ id: labelToDelete.id });
       
       toast({
         title: "Label deleted",
         description: "The label has been deleted successfully.",
       });
-
+      
+      // Refresh the labels list to show updated data
       onRefresh();
       setIsDeleteDialogOpen(false);
       setLabelToDelete(null);
       
-      // ACTUAL API CODE - Uncomment when API is ready
-      // await apiService.deleteLabel({ id: labelToDelete.id });
-      // 
-      // toast({
-      //   title: "Label deleted",
-      //   description: "The label has been deleted successfully.",
-      // });
-      // 
-      // onRefresh();
-      // setIsDeleteDialogOpen(false);
-      // setLabelToDelete(null);
+      // MOCK DATA - Disabled
+      // await mockDelay(800); // Simulate API delay
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to delete label.";
       toast({
