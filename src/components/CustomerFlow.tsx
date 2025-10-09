@@ -284,8 +284,22 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
       const response = await apiService.createRequest(payload);
       
       if (response.success) {
+        console.log('✅ Request submitted successfully:', response);
+        
         // Store the success message from API response
         setSuccessMessage(response.message || 'Request submitted successfully!');
+        
+        // 🔄 Trigger a global event to notify other components about the counter update
+        // This will help Labels Management refresh if it's open in another tab/window
+        window.dispatchEvent(new CustomEvent('labelCounterUpdated', {
+          detail: {
+            requestId: response.data?.id,
+            labelId: payload.labelId,
+            labelName: payload.labelName,
+            timestamp: new Date().toISOString()
+          }
+        }));
+        
         setStep('success');
       } else {
         throw new Error(response.message || 'Request failed');

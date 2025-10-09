@@ -34,7 +34,11 @@ export interface CreateRequestPayload {
 export interface CreateRequestResponse {
   success: boolean;
   message?: string;
-  requestId?: string;
+  data?: {
+    id: string;
+    smsSent?: boolean;
+    smsError?: string;
+  };
 }
 
 export interface VerifyCaptchaPayload {
