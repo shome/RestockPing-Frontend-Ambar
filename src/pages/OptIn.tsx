@@ -23,7 +23,25 @@ const OptIn = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Loading location...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if no location ID available
+  if (!urlLocation && !isLoading && !defaultLocationId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-red-500 text-xl">⚠️</div>
+          <h2 className="text-xl font-semibold">Location Required</h2>
+          <p className="text-muted-foreground max-w-md">
+            Unable to load location information. Please contact support or try accessing this page with a location parameter.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Example: <code>?location=your-location-id</code>
+          </p>
         </div>
       </div>
     );

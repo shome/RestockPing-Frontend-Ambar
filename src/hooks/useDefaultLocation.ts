@@ -1,62 +1,58 @@
-import { useState, useEffect } from 'react';
-import { apiService } from '@/lib/api';
-
-interface Location {
-  id: string;
-  name: string;
-  slug: string;
-}
+import { useEffect, useState } from "react";
 
 export function useDefaultLocation() {
-  const [defaultLocationId, setDefaultLocationId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [locationId, setLocationId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDefaultLocation = async () => {
+    const fetchLocation = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL ||
+          "https://restock-ping-backend-ambar-pzn5.vercel.app";
+
+        console.log("🌍 Fetching default location from:", `${baseUrl}/api/admin/locations`);
+
+        const res = await fetch(`${baseUrl}/api/admin/locations?limit=1`);
         
-        // Try to get locations from the API
-        const response = await fetch('/api/admin/locations?limit=1');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch locations');
+        // Check if response is ok first
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
         
-        const data = await response.json();
-        
+        const data = await res.json();
+        console.log("📦 Locations response:", data);
+
+        // Handle the expected response format from backend
         if (data.success && data.locations && data.locations.length > 0) {
-          const firstLocation = data.locations[0];
-          setDefaultLocationId(firstLocation.id);
-          console.log('🏢 Using default location:', {
-            id: firstLocation.id,
-            name: firstLocation.name
+          setLocationId(data.locations[0].id);
+          console.log("✅ Default location fetched:", {
+            id: data.locations[0].id,
+            name: data.locations[0].name
           });
+        } else if (Array.isArray(data) && data.length > 0) {
+          // Fallback for different response format
+          setLocationId(data[0].id);
+          console.log("✅ Default location fetched (array format):", data[0].id);
         } else {
-          // Fallback to a hardcoded default
-          const fallbackId = 'default-location-id';
-          setDefaultLocationId(fallbackId);
-          console.warn('⚠️ No locations found, using fallback:', fallbackId);
+          console.warn("⚠️ No locations found, cannot proceed without valid location ID.");
+          // Don't set a fake ID - let the validation handle it
+          setLocationId(null);
         }
       } catch (err) {
-        console.error('❌ Error fetching default location:', err);
-        // Use fallback location on error
-        const fallbackId = 'default-location-id';
-        setDefaultLocationId(fallbackId);
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        console.error("❌ Error fetching default location:", err);
+        // Don't set a fake ID on error - let the validation handle it
+        setLocationId(null);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchDefaultLocation();
+    fetchLocation();
   }, []);
 
-  return {
-    defaultLocationId,
-    isLoading,
-    error
+  return { 
+    defaultLocationId: locationId, 
+    isLoading: loading 
   };
 }
