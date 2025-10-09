@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { adminApiService, AdminPinEntry } from '@/lib/adminApi';
-import { toInputDateTimeLocal, fromInputDateTimeLocal } from '@/utils/frontendDateUtils';
 
 type Props = {
   pin: AdminPinEntry | null;
@@ -15,7 +14,14 @@ type Props = {
   onSaved?: (updated: any) => void;
 };
 
-// Date utility functions moved to utils/frontendDateUtils.ts
+function toInputDateTimeLocal(expireAt?: string | null): string {
+  if (!expireAt) return '';
+  const d = new Date(expireAt);
+  if (Number.isNaN(d.getTime())) return '';
+  // for datetime-local input -> yyyy-MM-ddTHH:mm
+  const iso = d.toISOString();
+  return iso.slice(0, 16);
+}
 
 export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) => {
   const [newPin, setNewPin] = useState('');
@@ -55,103 +61,32 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
 
   const handleSave = async () => {
     setError(null);
-    if (!pin) {
-      const errorMsg = 'No PIN selected';
-      setError(errorMsg);
-      toast({
-        title: "Error",
-        description: errorMsg,
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!validatePin(newPin)) {
-      const errorMsg = 'PIN must be exactly 4 digits';
-      setError(errorMsg);
-      toast({
-        title: "Invalid PIN",
-        description: errorMsg,
-        variant: "destructive",
-      });
-      return;
-    }
-    
+    if (!pin) return setError('No PIN selected');
+    if (!validatePin(newPin)) return setError('PIN must be 4 digits');
     setLoading(true);
     
     try {
-      // Prepare payload with safe date conversion and location_id
-      const payload: any = { 
-        newPin,
-        locationId: pin.location_id // Include location ID from the PIN object
-      };
-      
-      // Validate that we have location_id
-      if (!payload.locationId) {
-        const errorMsg = 'Location ID is missing from PIN data';
-        setError(errorMsg);
-        toast({
-          title: "Missing Location",
-          description: errorMsg,
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-      
-      if (expireLocal && expireLocal.trim() !== '') {
-        const isoDate = fromInputDateTimeLocal(expireLocal);
-        if (isoDate) {
-          payload.expireAt = isoDate;
-        } else {
-          const errorMsg = 'Invalid expiry date format';
-          setError(errorMsg);
-          toast({
-            title: "Invalid Date",
-            description: errorMsg,
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-      } else {
-        // Explicitly set to null if no expiry date
-        payload.expireAt = null;
+      // call backend
+      const payload: any = { newPin };
+      if (expireLocal) {
+        // convert back to ISO
+        const d = new Date(expireLocal);
+        if (!Number.isNaN(d.getTime())) payload.expireAt = d.toISOString();
       }
 
-      console.log('🔄 Updating PIN with payload:', { pinId: pin.id, payload });
       const resp = await adminApiService.updateTeamPin(pin.id, payload);
-      console.log('✅ PIN update response:', resp);
 
-      // Success
+      // success
       toast({
         title: "PIN updated successfully",
-        description: `PIN for ${pin.location_name} has been updated to ${newPin}`,
+        description: `PIN for ${pin.location_name} has been updated`,
       });
       
       if (onSaved) onSaved(resp);
       onClose();
     } catch (e: any) {
-      console.error('❌ Edit PIN error:', {
-        error: e,
-        response: e?.response?.data,
-        status: e?.response?.status,
-        pinId: pin?.id,
-        payload: { newPin, expireAt: expireLocal }
-      });
-      
-      // Extract error message with multiple fallbacks
-      let errorMessage = 'Unknown error occurred';
-      if (e?.response?.data?.error) {
-        errorMessage = e.response.data.error;
-      } else if (e?.response?.data?.message) {
-        errorMessage = e.response.data.message;
-      } else if (e?.message) {
-        errorMessage = e.message;
-      } else if (e?.response?.statusText) {
-        errorMessage = `HTTP ${e.response.status}: ${e.response.statusText}`;
-      }
-      
+      console.error('Edit PIN error', e);
+      const errorMessage = e?.response?.data?.error || e?.response?.data?.message || e.message || 'Unknown error';
       setError(errorMessage);
       toast({
         title: "Error updating PIN",
@@ -232,13 +167,7 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
             />
             {expireLocal && (
               <p className="text-xs text-muted-foreground mt-1">
-                PIN will expire on {(() => {
-                  try {
-                    return new Date(expireLocal).toLocaleString();
-                  } catch {
-                    return 'Invalid date';
-                  }
-                })()}
+                PIN will expire on {new Date(expireLocal).toLocaleString()}
               </p>
             )}
           </div>
@@ -261,10 +190,10 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Updating PIN...
+                  Saving...
                 </>
               ) : (
-                'Update PIN'
+                'Save PIN'
               )}
             </Button>
           </div>

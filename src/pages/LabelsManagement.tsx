@@ -18,7 +18,6 @@ import { apiService, Label, CSVUploadResponse } from '@/lib/api';
 import { mockLabels, createMockCSVUploadResponse, generateMockCSVData, mockDelay } from '@/lib/mockLabelsData';
 import CSVUpload from '@/components/CSVUpload';
 import LabelsTable from '@/components/LabelsTable';
-import RequestForm from '@/components/RequestForm';
 
 interface LabelsManagementProps {
   onBack: () => void;
@@ -36,73 +35,21 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
     fetchLabels();
   }, []);
 
-  // Auto-refresh every 30 seconds to keep counters updated
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('🔄 Auto-refreshing labels for counter updates...');
-      fetchLabels(false); // Silent refresh without loading indicator
-    }, 30000); // 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Listen for global counter update events from customer requests
-  useEffect(() => {
-    const handleCounterUpdate = (event: CustomEvent) => {
-      console.log('🔔 Received counter update event:', event.detail);
-      console.log('🔄 Refreshing labels due to customer request...');
-      fetchLabels(false); // Silent refresh when customer submits request
-    };
-
-    window.addEventListener('labelCounterUpdated', handleCounterUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('labelCounterUpdated', handleCounterUpdate as EventListener);
-    };
-  }, []);
-
-  const fetchLabels = async (showLoading = true) => {
+  const fetchLabels = async () => {
     try {
-      if (showLoading) setIsLoading(true);
+      setIsLoading(true);
       
-      // ACTUAL API CODE - Now enabled with higher limit
-      // Use admin API for management interface
-      const { adminApiService } = await import('@/lib/adminApi');
-      const response = await adminApiService.getLabels('', 500, 0); // Get first 500 labels
-      if (response.success) {
-        console.log('🔍 API Response:', response.labels);
-        // Convert AdminLabel[] to Label[] format
-        const convertedLabels = response.labels.map(adminLabel => ({
-          id: adminLabel.id,
-          code: adminLabel.code,
-          name: adminLabel.name,
-          synonyms: adminLabel.synonyms,
-          active: adminLabel.active,
-          location_id: adminLabel.location_id,
-          subscribers_count: adminLabel.subscribers_count,
-          total_sends: adminLabel.total_sends,
-          sent_count: adminLabel.total_sends, // Alias for compatibility
-          created_at: new Date().toISOString(), // Default value
-          updated_at: new Date().toISOString()  // Default value
-        }));
-        setLabels(convertedLabels);
-        
-        // 🔄 Log counter info for debugging
-        const labelsWithCounters = response.labels.filter(l => l.subscribers_count > 0 || l.total_sends > 0);
-        if (labelsWithCounters.length > 0) {
-          console.log('📊 Labels with counters:', labelsWithCounters.map(l => ({
-            name: l.name,
-            subscribers: l.subscribers_count,
-            sends: l.total_sends
-          })));
-        }
-      } else {
-        throw new Error('Failed to fetch labels');
-      }
+      // MOCK DATA - Comment out when API is ready
+      await mockDelay(800); // Simulate API delay
+      setLabels([...mockLabels]);
       
-      // MOCK DATA - Fallback if API fails
-      // await mockDelay(800); // Simulate API delay
-      // setLabels([...mockLabels]);
+      // ACTUAL API CODE - Uncomment when API is ready
+      // const response = await apiService.fetchLabels(100, 0); // Get first 100 labels
+      // if (response.success) {
+      //   setLabels(response.labels);
+      // } else {
+      //   throw new Error('Failed to fetch labels');
+      // }
     } catch (error: any) {
       console.error('Error fetching labels:', error);
       const errorMessage = error.response?.data?.message || error.message || "Failed to load labels. Please try again.";
@@ -111,19 +58,9 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
         description: errorMessage,
         variant: "destructive",
       });
-      
-      // Fallback to mock data if API fails
-      console.log('🔄 Falling back to mock data');
-      await mockDelay(800);
-      setLabels([...mockLabels]);
     } finally {
-      if (showLoading) setIsLoading(false);
+      setIsLoading(false);
     }
-  };
-
-  // Wrapper function for refresh button
-  const handleRefresh = () => {
-    fetchLabels(true);
   };
 
   const handleUploadComplete = (response: CSVUploadResponse) => {
@@ -195,7 +132,7 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
             </Button>
             <Button
               variant="outline"
-              onClick={handleRefresh}
+              onClick={fetchLabels}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -276,10 +213,6 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
               <Upload className="h-4 w-4" />
               CSV Upload
             </TabsTrigger>
-            <TabsTrigger value="request" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Test Request
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="table" className="space-y-4">
@@ -295,37 +228,6 @@ const LabelsManagement: React.FC<LabelsManagementProps> = ({ onBack }) => {
               onUploadComplete={handleUploadComplete}
               onRefresh={fetchLabels}
             />
-          </TabsContent>
-
-          <TabsContent value="request" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <RequestForm onRequestCreated={() => {
-                console.log('🔄 Request created, refreshing labels...');
-                fetchLabels(false); // Silent refresh after request creation
-              }} />
-              <Card>
-                <CardHeader>
-                  <CardTitle>Counter Test Instructions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 text-sm">
-                    <p>Use this form to test automatic counter updates:</p>
-                    <ol className="list-decimal list-inside space-y-2">
-                      <li>Fill in the form with valid data</li>
-                      <li>Submit the request</li>
-                      <li>Check the Labels Table - counters should update automatically</li>
-                      <li>The subscribers_count and total_sends will increment</li>
-                    </ol>
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                      <p className="font-medium text-blue-900">Note:</p>
-                      <p className="text-blue-800">
-                        Each request automatically creates an optin record and updates the label counters in real-time.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </TabsContent>
         </Tabs>
 

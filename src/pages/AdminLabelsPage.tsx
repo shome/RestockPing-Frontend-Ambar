@@ -72,17 +72,6 @@ const AdminLabelsPage: React.FC = () => {
       
       const response = await adminApiService.getLabels(debouncedSearchQuery, limit, offset);
       
-      // 🔍 Debug: Log labels data to check subscribers_count
-      console.log('📥 Labels received from API:', response.labels);
-      response.labels.forEach((label, index) => {
-        console.log(`Label ${index + 1} (${label.name}):`, {
-          subscribers_count: label.subscribers_count,
-          total_sends: label.total_sends,
-          hasSubscribersCount: label.subscribers_count !== undefined,
-          subscribersCountType: typeof label.subscribers_count
-        });
-      });
-      
       if (offset === 0) {
         // First load or search - replace data
         setLabels(response.labels);
@@ -562,10 +551,8 @@ const AdminLabelsPage: React.FC = () => {
                             {label.active ? 'Active' : 'Inactive'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-center font-semibold">
-                          {label.subscribers_count !== undefined && label.subscribers_count !== null
-                            ? label.subscribers_count
-                            : 0}
+                        <TableCell className="text-center text-foreground">
+                          {label.subscribers_count}
                         </TableCell>
                         <TableCell className="text-center text-foreground">
                           {label.total_sends}
@@ -574,9 +561,7 @@ const AdminLabelsPage: React.FC = () => {
                           {label.last_sent ? formatDate(label.last_sent) : 'Never'}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground font-mono">
-                          {((label.subscribers_count !== undefined && label.subscribers_count !== null ? label.subscribers_count : 0) > 0) 
-                            ? maskPhoneNumber('+14158889999') 
-                            : 'No subscribers'}
+                          {label.subscribers_count > 0 ? maskPhoneNumber('+14158889999') : 'No subscribers'}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -744,11 +729,7 @@ const AdminLabelsPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                 <div className="space-y-1">
                   <Label className="text-sm font-medium text-foreground">Subscribers</Label>
-                  <p className="text-2xl font-bold text-foreground">
-                    {editingLabel?.subscribers_count !== undefined && editingLabel?.subscribers_count !== null
-                      ? editingLabel.subscribers_count
-                      : 0}
-                  </p>
+                  <p className="text-2xl font-bold text-foreground">{editingLabel?.subscribers_count || 0}</p>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-sm font-medium text-foreground">Total Sends</Label>

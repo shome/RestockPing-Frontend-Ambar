@@ -76,11 +76,6 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
     label.synonyms.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Debug: Log the first label to check data structure
-  if (filteredLabels.length > 0) {
-    console.log('🔍 First label data:', filteredLabels[0]);
-  }
-
   const handleEdit = (label: Label) => {
     setEditingLabel({
       id: label.id,
@@ -124,58 +119,66 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
     setIsSubmitting(true);
 
     try {
-      // ACTUAL API CODE - Now enabled
+      // MOCK DATA - Comment out when API is ready
+      await mockDelay(1000); // Simulate API delay
+      
       if (editingLabel.id) {
-        // Update existing label
-        const updatePayload: LabelUpdatePayload = {
-          id: editingLabel.id,
-          code: editingLabel.code.trim(),
-          name: editingLabel.name.trim(),
-          synonyms: editingLabel.synonyms.trim(),
-          active: editingLabel.active
-        };
-
-        // Use admin API for label updates
-        const { adminApiService } = await import('@/lib/adminApi');
-        await adminApiService.updateLabel(editingLabel.id, {
-          name: editingLabel.name.trim(),
-          synonyms: editingLabel.synonyms.trim(),
-          active: editingLabel.active
-          // Note: code cannot be updated via admin API
-        });
-        
+        // Update existing label - Mock success
         toast({
           title: "Label updated",
           description: "The label has been updated successfully.",
         });
       } else {
-        // Create new label
-        const createPayload: LabelCreatePayload = {
-          code: editingLabel.code.trim(),
-          name: editingLabel.name.trim(),
-          synonyms: editingLabel.synonyms.trim(),
-          active: editingLabel.active
-        };
-
-        // Use admin API for label creation
-        const { adminApiService } = await import('@/lib/adminApi');
-        // Note: Admin API doesn't have createLabel, so show appropriate message
-        throw new Error('Label creation should be done via CSV upload or admin panel');
-        
+        // Create new label - Mock success
         toast({
           title: "Label created",
           description: "The new label has been created successfully.",
         });
       }
 
-      // Refresh the labels list to show updated data
       onRefresh();
       setIsEditDialogOpen(false);
       setIsCreateDialogOpen(false);
       setEditingLabel(null);
       
-      // MOCK DATA - Disabled
-      // await mockDelay(1000); // Simulate API delay
+      // ACTUAL API CODE - Uncomment when API is ready
+      // if (editingLabel.id) {
+      //   // Update existing label
+      //   const updatePayload: LabelUpdatePayload = {
+      //     id: editingLabel.id,
+      //     code: editingLabel.code.trim(),
+      //     name: editingLabel.name.trim(),
+      //     synonyms: editingLabel.synonyms.trim(),
+      //     active: editingLabel.active
+      //   };
+      // 
+      //   await apiService.updateLabel(updatePayload);
+      //   
+      //   toast({
+      //     title: "Label updated",
+      //     description: "The label has been updated successfully.",
+      //   });
+      // } else {
+      //   // Create new label
+      //   const createPayload: LabelCreatePayload = {
+      //     code: editingLabel.code.trim(),
+      //     name: editingLabel.name.trim(),
+      //     synonyms: editingLabel.synonyms.trim(),
+      //     active: editingLabel.active
+      //   };
+      // 
+      //   await apiService.createLabel(createPayload);
+      //   
+      //   toast({
+      //     title: "Label created",
+      //     description: "The new label has been created successfully.",
+      //   });
+      // }
+      // 
+      // onRefresh();
+      // setIsEditDialogOpen(false);
+      // setIsCreateDialogOpen(false);
+      // setEditingLabel(null);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to save label.";
       toast({
@@ -194,23 +197,29 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
     setIsSubmitting(true);
 
     try {
-      // Use admin API for label deletion
-      const { adminApiService } = await import('@/lib/adminApi');
-      // Note: Admin API doesn't have deleteLabel, so show appropriate message
-      throw new Error('Label deletion should be done via admin panel');
+      // MOCK DATA - Comment out when API is ready
+      await mockDelay(800); // Simulate API delay
       
       toast({
         title: "Label deleted",
         description: "The label has been deleted successfully.",
       });
-      
-      // Refresh the labels list to show updated data
+
       onRefresh();
       setIsDeleteDialogOpen(false);
       setLabelToDelete(null);
       
-      // MOCK DATA - Disabled
-      // await mockDelay(800); // Simulate API delay
+      // ACTUAL API CODE - Uncomment when API is ready
+      // await apiService.deleteLabel({ id: labelToDelete.id });
+      // 
+      // toast({
+      //   title: "Label deleted",
+      //   description: "The label has been deleted successfully.",
+      // });
+      // 
+      // onRefresh();
+      // setIsDeleteDialogOpen(false);
+      // setLabelToDelete(null);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to delete label.";
       toast({
@@ -275,8 +284,6 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
                     <TableHead>Code</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Synonyms</TableHead>
-                    <TableHead>Subscribers</TableHead>
-                    <TableHead>Messages Sent</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -288,12 +295,6 @@ const LabelsTable: React.FC<LabelsTableProps> = ({ labels, onRefresh, isLoading 
                       <TableCell className="font-medium">{label.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
                         {label.synonyms || '-'}
-                      </TableCell>
-                      <TableCell className="text-center font-mono text-sm">
-                        {label.subscribers_count ?? 0}
-                      </TableCell>
-                      <TableCell className="text-center font-mono text-sm">
-                        {label.sent_count ?? label.total_sends ?? 0}
                       </TableCell>
                       <TableCell>
                         <Badge variant={label.active ? "default" : "secondary"}>

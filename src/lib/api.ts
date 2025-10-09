@@ -34,11 +34,7 @@ export interface CreateRequestPayload {
 export interface CreateRequestResponse {
   success: boolean;
   message?: string;
-  data?: {
-    id: string;
-    smsSent?: boolean;
-    smsError?: string;
-  };
+  requestId?: string;
 }
 
 export interface VerifyCaptchaPayload {
@@ -179,11 +175,6 @@ export interface Label {
   location_id: string;
   created_at?: string;
   updated_at?: string;
-  sent_count?: number;
-  total_sends?: number;
-  subscribers_count?: number;
-  hasSubscribersCount?: boolean;
-  subscribersCountType?: string;
 }
 
 export interface LabelCreatePayload {
@@ -640,31 +631,6 @@ export const apiService = {
       throw new Error(apiError.message);
     }
   },
-
-  /**
-   * Send SMS to label subscribers
-   * @param labelId - Label ID to send SMS to
-   * @param message - Message content
-   * @param locationId - Location ID
-   * @param senderUserId - Optional sender user ID
-   * @returns Promise with SMS send response
-   */
-  sendSmsToLabel: async (labelId: string, message: string, locationId: string, senderUserId?: string) => {
-    try {
-      const response = await apiClient.post('/api/sms/send-to-label', {
-        labelId,
-        message,
-        locationId,
-        senderUserId
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error sending SMS to label:', error);
-      const apiError = ApiErrorHandler.getErrorDetails(error);
-      throw new Error(apiError.message);
-    }
-  },
-
 
   // Label Management API functions
   /**
