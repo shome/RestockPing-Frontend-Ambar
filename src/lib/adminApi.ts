@@ -342,10 +342,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000
 // Create axios instance for admin API
 const adminApiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 120000, // 2 minutes for file uploads and heavy operations
+  // No default Content-Type - let axios set it automatically based on request data
 });
 
 // Request interceptor for adding admin auth headers
@@ -355,6 +353,11 @@ adminApiClient.interceptors.request.use(
     const token = localStorage.getItem('admin_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Set Content-Type for non-FormData requests
+    if (!(config.data instanceof FormData) && !config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json';
     }
     
     console.log(`Admin API Request: ${config.method?.toUpperCase()} ${config.url}`);
@@ -481,17 +484,19 @@ export const adminApiService = {
   importLabelsCSV: async (file: File, locationId: string): Promise<AdminCSVImportResponse> => {
     try {
       const formData = new FormData();
-      formData.append('csv', file);
+      formData.append('file', file);
       formData.append('location_id', locationId);
       
       const response = await adminApiClient.post<AdminCSVImportResponse>('/api/admin/labels/import', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        timeout: 300000, // 5 minutes specifically for CSV import
       });
       return response.data;
-    } catch (error) {
-      console.error('Error importing labels CSV:', error);
+    } catch (error: any) {
+      console.error('Error importing labels CSV:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
       throw error;
     }
   },
