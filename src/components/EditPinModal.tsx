@@ -80,14 +80,14 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
     setLoading(true);
     
     try {
-      // Prepare payload with safe date conversion and location_id
+      // Prepare payload with correct field names for backend
       const payload: any = { 
-        newPin,
-        locationId: pin.location_id // Include location ID from the PIN object
+        pin: newPin,
+        location_id: pin.location_id || null // Include location ID from the PIN object
       };
       
       // Validate that we have location_id
-      if (!payload.locationId) {
+      if (!payload.location_id) {
         const errorMsg = 'Location ID is missing from PIN data';
         setError(errorMsg);
         toast({
@@ -102,7 +102,18 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
       if (expireLocal && expireLocal.trim() !== '') {
         const isoDate = fromInputDateTimeLocal(expireLocal);
         if (isoDate) {
-          payload.expireAt = isoDate;
+          // UTC conversion to ensure backend gets the exact time user selected
+          const date = new Date(isoDate);
+          const expireAt = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();
+          payload.expire_at = expireAt;
+          
+          console.log('🕐 Date conversion details:', {
+            original_local: expireLocal,
+            parsed_date: isoDate,
+            timezone_offset_minutes: date.getTimezoneOffset(),
+            final_utc: expireAt,
+            user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          });
         } else {
           const errorMsg = 'Invalid expiry date format';
           setError(errorMsg);
@@ -116,10 +127,13 @@ export const EditPinModal: React.FC<Props> = ({ pin, open, onClose, onSaved }) =
         }
       } else {
         // Explicitly set to null if no expiry date
-        payload.expireAt = null;
+        payload.expire_at = null;
       }
 
       console.log('🔄 Updating PIN with payload:', { pinId: pin.id, payload });
+      console.log('📋 Full payload details:');
+      console.log(JSON.stringify(payload, null, 2));
+      
       const resp = await adminApiService.updateTeamPin(pin.id, payload);
       console.log('✅ PIN update response:', resp);
 
