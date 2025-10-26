@@ -83,7 +83,7 @@ const AuditLog = ({ onBack }: AuditLogProps) => {
 
   const handleExport = () => {
     const csvContent = [
-      "Date,Time,User,Action,Details,Sent Count,Label Name",
+      "Date,Time,Office,Action,Details,Sent Count,Label Name",
       ...auditEntries.map(entry => [
         entry.date,
         entry.time,
@@ -195,7 +195,7 @@ const AuditLog = ({ onBack }: AuditLogProps) => {
           <CardHeader>
             <CardTitle>Activity Log</CardTitle>
             <CardDescription>
-              Simple list format: Date, User, Sent X subscribers
+              Simple list format: Date, Office, Sent X subscribers
             </CardDescription>
           </CardHeader>
           <CardContent>

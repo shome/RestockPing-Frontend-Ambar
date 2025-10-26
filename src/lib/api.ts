@@ -153,7 +153,7 @@ export interface AuditLogEntry {
   id: string;
   date: string;
   time: string;
-  user: string;
+  user: string; // Contains office name (e.g., "Paris Office", "London Office")
   action: string;
   details: string;
   sent_count: number;
