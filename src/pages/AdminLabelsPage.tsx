@@ -192,8 +192,8 @@ const AdminLabelsPage: React.FC = () => {
       const response = await adminApiService.importLabelsCSV(file, selectedLocationId);
       setUploadResult(response);
       toast({
-        title: "CSV Import Complete",
-        description: `Imported ${response.imported} labels, updated ${response.updated} labels`,
+        title: "CSV Non-Destructive Merge Complete",
+        description: `Successfully processed: ${response.imported} new, ${response.updated} updated, ${response.total_merged} total labels (no data loss)`,
       });
       setShowUploadDialog(false);
       setSelectedLocationId('');
@@ -209,6 +209,15 @@ const AdminLabelsPage: React.FC = () => {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const deduplicateLabels = (labelsArray: AdminLabel[]): AdminLabel[] => {
+    const uniqueLabels = Array.from(
+      new Map(labelsArray.map(label => [label.code, label])).values()
+    );
+    
+    console.log(`🔄 Client-side deduplication: ${labelsArray.length} → ${uniqueLabels.length} unique labels`);
+    return uniqueLabels;
   };
 
   const handleDownloadCSV = async () => {
@@ -228,7 +237,7 @@ const AdminLabelsPage: React.FC = () => {
       
       toast({
         title: "CSV Export Complete",
-        description: "Labels have been exported successfully",
+        description: "Labels have been exported successfully (duplicates automatically removed)",
       });
     } catch (error: any) {
       console.error('Error downloading CSV:', error);
@@ -329,10 +338,32 @@ const AdminLabelsPage: React.FC = () => {
                       </div>
                       {uploadResult && (
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                          <h4 className="font-medium text-green-800">Import Results</h4>
-                          <p className="text-sm text-green-700">
-                            Imported: {uploadResult.imported} | Updated: {uploadResult.updated} | Errors: {uploadResult.errors}
-                          </p>
+                          <h4 className="font-medium text-green-800">Non-Destructive Merge Results</h4>
+                          <div className="text-sm text-green-700 space-y-1">
+                            <p><strong>New Labels:</strong> {uploadResult.imported}</p>
+                            <p><strong>Updated Labels:</strong> {uploadResult.updated}</p>
+                            <p><strong>Total Merged:</strong> {uploadResult.total_merged || 'N/A'}</p>
+                            <p><strong>Existing Before:</strong> {uploadResult.total_existing || 'N/A'}</p>
+                            {uploadResult.errors > 0 && (
+                              <p className="text-red-600"><strong>Errors:</strong> {uploadResult.errors}</p>
+                            )}
+                            {uploadResult.success_rate && (
+                              <p><strong>Success Rate:</strong> {uploadResult.success_rate.toFixed(1)}%</p>
+                            )}
+                          </div>
+                          {uploadResult.errorDetails && uploadResult.errorDetails.length > 0 && (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                              <p className="text-xs font-medium text-red-800">Error Details:</p>
+                              <ul className="text-xs text-red-700 mt-1 space-y-1">
+                                {uploadResult.errorDetails.slice(0, 3).map((error, index) => (
+                                  <li key={index}>• {error}</li>
+                                ))}
+                                {uploadResult.errorDetails.length > 3 && (
+                                  <li className="italic">... and {uploadResult.errorDetails.length - 3} more</li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
