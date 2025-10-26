@@ -488,6 +488,7 @@ export const adminApiService = {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 30000
       });
       return response.data;
     } catch (error) {
