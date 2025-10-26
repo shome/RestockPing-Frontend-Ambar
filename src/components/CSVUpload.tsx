@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -11,14 +11,15 @@ import {
   XCircle, 
   Download,
   AlertTriangle,
-  Loader2
+  Loader2,
+  MapPin
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { apiService, CSVUploadResponse } from '@/lib/api';
-import { createMockCSVUploadResponse, mockDelay } from '@/lib/mockLabelsData';
+import { adminApiService, AdminCSVImportResponse, AdminLocationsResponse } from '@/lib/adminApi';
 
 interface CSVUploadProps {
-  onUploadComplete?: (response: CSVUploadResponse) => void;
+  onUploadComplete?: (response: AdminCSVImportResponse) => void;
   onRefresh?: () => void;
 }
 
@@ -32,11 +33,48 @@ interface CSVValidationError {
 const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadResult, setUploadResult] = useState<CSVUploadResponse | null>(null);
+  const [uploadResult, setUploadResult] = useState<AdminCSVImportResponse | null>(null);
   const [validationErrors, setValidationErrors] = useState<CSVValidationError[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [locations, setLocations] = useState<Array<{id: string, name: string}>>([]);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Load locations on component mount
+  useEffect(() => {
+    const loadLocations = async () => {
+      setIsLoadingLocations(true);
+      try {
+        const response = await adminApiService.getLocations();
+        if (response.success) {
+          setLocations(response.locations);
+          // Auto-select first location if available
+          if (response.locations.length > 0) {
+            setSelectedLocation(response.locations[0].id);
+          }
+        } else {
+          toast({
+            title: "Error loading locations",
+            description: response.message || "Failed to load locations",
+            variant: "destructive",
+          });
+        }
+      } catch (error: any) {
+        console.error('Error loading locations:', error);
+        toast({
+          title: "Error loading locations",
+          description: error.message || "Failed to load locations",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingLocations(false);
+      }
+    };
+
+    loadLocations();
+  }, [toast]);
 
   const handleFileSelect = (file: File) => {
     // Validate file type
@@ -63,6 +101,16 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) =>
   };
 
   const uploadFile = async (file: File) => {
+    // Validate location selection
+    if (!selectedLocation) {
+      toast({
+        title: "Location required",
+        description: "Please select a location before uploading.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
     setUploadResult(null);
@@ -80,18 +128,18 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) =>
         });
       }, 200);
 
-      // MOCK DATA - Comment out when API is ready
-      await mockDelay(2000); // Simulate API delay
-      const response = createMockCSVUploadResponse(file);
+      // Use real API
+      const response = await adminApiService.importLabelsCSV(file, selectedLocation);
       
       clearInterval(progressInterval);
       setUploadProgress(100);
       setUploadResult(response);
 
       if (response.success) {
+        const locationName = locations.find(loc => loc.id === selectedLocation)?.name || 'Selected location';
         toast({
           title: "Upload successful!",
-          description: `Processed ${response.processed} rows. Created: ${response.created}, Updated: ${response.updated}`,
+          description: `${locationName}: ${response.imported} new, ${response.updated} updated, ${response.total_merged} total labels`,
         });
         
         if (onUploadComplete) {
@@ -110,8 +158,8 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) =>
       }
 
       // Parse validation errors if any
-      if (response.errors && response.errors.length > 0) {
-        const errors: CSVValidationError[] = response.errors.map((error, index) => ({
+      if (response.errorDetails && response.errorDetails.length > 0) {
+        const errors: CSVValidationError[] = response.errorDetails.map((error, index) => ({
           row: index + 1,
           field: 'unknown',
           message: error,
@@ -120,50 +168,14 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) =>
         setValidationErrors(errors);
       }
 
-      // ACTUAL API CODE - Uncomment when API is ready
-      // const response = await apiService.uploadLabelsCSV(file);
-      // 
-      // clearInterval(progressInterval);
-      // setUploadProgress(100);
-      // setUploadResult(response);
-      // 
-      // if (response.success) {
-      //   toast({
-      //     title: "Upload successful!",
-      //     description: `Processed ${response.processed} rows. Created: ${response.created}, Updated: ${response.updated}`,
-      //   });
-      //   
-      //   if (onUploadComplete) {
-      //     onUploadComplete(response);
-      //   }
-      //   
-      //   if (onRefresh) {
-      //     onRefresh();
-      //   }
-      // } else {
-      //   toast({
-      //     title: "Upload completed with errors",
-      //     description: response.message,
-      //     variant: "destructive",
-      //   });
-      // }
-      // 
-      // // Parse validation errors if any
-      // if (response.errors && response.errors.length > 0) {
-      //   const errors: CSVValidationError[] = response.errors.map((error, index) => ({
-      //     row: index + 1,
-      //     field: 'unknown',
-      //     message: error,
-      //     value: ''
-      //   }));
-      //   setValidationErrors(errors);
-      // }
 
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('CSV upload error:', error);
+      setUploadProgress(0);
+      const errorMessage = error.response?.data?.message || error.message || 'An error occurred during upload';
       toast({
         title: "Upload failed",
-        description: error.message || "An error occurred during upload.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -199,10 +211,8 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) =>
 
   const downloadTemplate = async () => {
     try {
-      // MOCK DATA - Comment out when API is ready
-      await mockDelay(500); // Simulate API delay
-      const templateData = 'code,name,synonyms,active\nIPH15,"iPhone 15 Pro","smartphone,phone,mobile",true\nSGS24,"Samsung Galaxy S24","android,galaxy",true\nMBPM3,"MacBook Pro M3","laptop,computer",false';
-      const blob = new Blob([templateData], { type: 'text/csv' });
+      // Use real API to export current labels as template
+      const blob = await adminApiService.exportLabelsCSV();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -216,22 +226,6 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) =>
         title: "Template downloaded",
         description: "CSV template has been downloaded successfully.",
       });
-      
-      // ACTUAL API CODE - Uncomment when API is ready
-      // const blob = await apiService.downloadLabelsCSV();
-      // const url = window.URL.createObjectURL(blob);
-      // const a = document.createElement('a');
-      // a.href = url;
-      // a.download = 'labels_template.csv';
-      // document.body.appendChild(a);
-      // a.click();
-      // window.URL.revokeObjectURL(url);
-      // document.body.removeChild(a);
-      // 
-      // toast({
-      //   title: "Template downloaded",
-      //   description: "CSV template has been downloaded successfully.",
-      // });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to download template.";
       toast({
@@ -265,6 +259,26 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) =>
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Location Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-2">
+              <MapPin className="h-4 w-4 inline mr-2" />
+              Select Location
+            </label>
+            <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={isLoadingLocations || isUploading}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={isLoadingLocations ? "Loading locations..." : "Select a location"} />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.map((location) => (
+                  <SelectItem key={location.id} value={location.id}>
+                    {location.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
               dragActive 
@@ -354,11 +368,11 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) =>
             <div className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{uploadResult.processed}</p>
+                  <p className="text-2xl font-bold text-blue-600">{uploadResult.total_processed}</p>
                   <p className="text-sm text-muted-foreground">Total Processed</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">{uploadResult.created}</p>
+                  <p className="text-2xl font-bold text-green-600">{uploadResult.imported}</p>
                   <p className="text-sm text-muted-foreground">Created</p>
                 </div>
                 <div className="text-center">
@@ -366,7 +380,7 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onUploadComplete, onRefresh }) =>
                   <p className="text-sm text-muted-foreground">Updated</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-red-600">{uploadResult.errors.length}</p>
+                  <p className="text-2xl font-bold text-red-600">{uploadResult.errors}</p>
                   <p className="text-sm text-muted-foreground">Errors</p>
                 </div>
               </div>
