@@ -170,7 +170,12 @@ export interface AdminCSVImportResponse {
   updated: number;
   errors: number;
   total_processed: number;
+  total_valid_rows: number;
+  total_existing: number;
+  total_merged: number;
+  success_rate: number;
   message?: string;
+  errorDetails?: string[];
 }
 
 export interface AdminLogEntry {
