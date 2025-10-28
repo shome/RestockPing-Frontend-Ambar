@@ -489,7 +489,9 @@ export const apiService = {
    */
   fetchTeamDashboard: async (): Promise<TeamDashboardResponse> => {
     try {
-      const response = await apiClient.get<TeamDashboardResponse>('/api/team/dashboard');
+      const response = await apiClient.get<TeamDashboardResponse>('/api/team/dashboard',
+        { timeout: 30000 }
+      );
       return response.data;
     } catch (error) {
       console.error('Error fetching team dashboard:', error);
