@@ -105,6 +105,7 @@ export interface DashboardMetrics {
 export interface TeamDashboardResponse {
   success: boolean;
   metrics: DashboardMetrics;
+  locationName: string;
 }
 
 // Scan API types
