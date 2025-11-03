@@ -1,20 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  LogOut,
-  QrCode,
-  Send,
-  Users,
-  Clock,
+import { 
+  LogOut, 
+  QrCode, 
+  Send, 
+  Users, 
+  Clock, 
   Package,
   History,
   RefreshCw,
@@ -27,9 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Custom skeleton variants with consistent blue theme
 const CardSkeleton = ({ className }: { className?: string }) => (
-  <div
-    className={`animate-pulse rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 ${className}`}
-  >
+  <div className={`animate-pulse rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 ${className}`}>
     <div className="p-4 space-y-3">
       <div className="flex items-center gap-2">
         <div className="w-5 h-5 bg-blue-300 rounded"></div>
@@ -44,9 +36,7 @@ const CardSkeleton = ({ className }: { className?: string }) => (
 );
 
 const ButtonSkeleton = ({ className }: { className?: string }) => (
-  <div
-    className={`animate-pulse rounded-lg bg-gradient-to-r from-blue-200 via-blue-100 to-blue-200 border border-blue-200 ${className}`}
-  >
+  <div className={`animate-pulse rounded-lg bg-gradient-to-r from-blue-200 via-blue-100 to-blue-200 border border-blue-200 ${className}`}>
     <div className="flex items-center justify-center gap-2 p-3">
       <div className="w-4 h-4 bg-blue-300 rounded"></div>
       <div className="h-4 bg-blue-300 rounded w-16"></div>
@@ -80,9 +70,9 @@ interface TeamDashboardProps {
   isLoading?: boolean;
 }
 
-const TeamDashboard = ({
-  onLogout,
-  onScan,
+const TeamDashboard = ({ 
+  onLogout, 
+  onScan, 
   onAuditLog,
   onLabelsManagement,
   onSendAlerts,
@@ -125,8 +115,7 @@ const TeamDashboard = ({
       setShowValidationError(true);
       toast({
         title: "Alert message required",
-        description:
-          "Please enter a message for the alert. You can use the suggested message or write your own.",
+        description: "Please enter a message for the alert. You can use the suggested message or write your own.",
         variant: "destructive",
       });
       return;
@@ -144,7 +133,7 @@ const TeamDashboard = ({
       // Reset the message input after successful send
       setAlertMessage("");
     } catch (error) {
-      console.error("Error in parent send alerts handler:", error);
+      console.error('Error in parent send alerts handler:', error);
     } finally {
       setIsSending(false);
       setLastRefresh(new Date());
@@ -172,12 +161,8 @@ const TeamDashboard = ({
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Team Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Manage back-in-stock notifications
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Team Dashboard</h1>
+            <p className="text-muted-foreground">Manage back-in-stock notifications</p>
           </div>
           <div className="flex gap-2">
             {isLoading ? (
@@ -187,27 +172,15 @@ const TeamDashboard = ({
               </>
             ) : (
               <>
-                <Button
-                  variant="outline"
-                  onClick={onLabelsManagement}
-                  className="flex items-center gap-2"
-                >
+                <Button variant="outline" onClick={onLabelsManagement} className="flex items-center gap-2">
                   <Tag className="h-4 w-4" />
                   <span className="hidden sm:inline">Labels</span>
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={onAuditLog}
-                  className="flex items-center gap-2"
-                >
+                <Button variant="outline" onClick={onAuditLog} className="flex items-center gap-2">
                   <History className="h-4 w-4" />
                   <span className="hidden sm:inline">Audit Log</span>
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={onLogout}
-                  className="flex items-center gap-2"
-                >
+                <Button variant="outline" onClick={onLogout} className="flex items-center gap-2">
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Logout</span>
                 </Button>
@@ -245,12 +218,7 @@ const TeamDashboard = ({
                 <CardContent>
                   <div className="space-y-2">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-blue-600">
-                        {activeVisitors}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        visitors
-                      </span>
+                      <span className="text-3xl font-bold text-blue-600">{activeVisitors}</span>                       <span className="text-sm text-muted-foreground">visitors</span>
                     </div>
                     <Badge
                       variant={activeVisitors > 0 ? "default" : "secondary"}
@@ -394,10 +362,7 @@ const TeamDashboard = ({
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="animate-pulse rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-4"
-                  >
+                 <div key={index} className="animate-pulse rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="h-4 bg-blue-300 rounded w-24"></div>
@@ -466,8 +431,7 @@ const TeamDashboard = ({
               Send Alerts
             </CardTitle>
             <CardDescription>
-              Send notifications to all waiting subscribers for the current
-              product
+              Send notifications to all waiting subscribers for the current product
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -563,8 +527,7 @@ const TeamDashboard = ({
                   />
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-gray-500">
-                      This message will be sent to all {subscriberCount} waiting
-                      subscribers
+                      This message will be sent to all {subscriberCount} waiting subscribers
                     </p>
                     <p className="text-xs text-gray-400">
                       {alertMessage.length}/160 characters
@@ -574,8 +537,7 @@ const TeamDashboard = ({
                   {showValidationError && (
                     <p className="text-xs text-red-500 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
-                      Please enter a message or click one of the preset options
-                      below
+                      Please enter a message or click one of the preset options below
                     </p>
                   )}
 
@@ -629,8 +591,7 @@ const TeamDashboard = ({
                 {subscriberCount === 0 && (
                   <div className="bg-muted/50 rounded-lg p-4">
                     <p className="text-sm text-muted-foreground text-center">
-                      No subscribers are waiting for this product. Scan or
-                      select a different product to send alerts.
+                      No subscribers are waiting for this product. Scan or select a different product to send alerts.
                     </p>
                   </div>
                 )}

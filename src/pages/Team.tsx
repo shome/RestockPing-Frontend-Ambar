@@ -1,33 +1,18 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import {
-  Bell,
-  Clock,
-  CheckCircle,
-  Search,
-  Send,
-  History,
-  QrCode,
-  Package,
-} from "lucide-react";
+import { Bell, Clock, CheckCircle, Search, Send, History, QrCode, Package } from "lucide-react";
 import AuditLog from "@/components/AuditLog";
 import ProductScanner from "@/components/ProductScanner";
 import TeamDashboard from "@/components/TeamDashboard";
-import {
-  mockProducts,
-  mockOptIns,
-  mockRequests,
-  sendSMS,
+import { 
+  mockProducts, 
+  mockOptIns, 
+  mockRequests, 
+  sendSMS, 
   createOptIn,
   Product,
   Request,
@@ -66,7 +51,7 @@ const Team = ({ onLogout }: TeamProps) => {
         setPendingAlerts(response.metrics.pendingAlerts);
         setLocationName(response.locationName);
       } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
+        console.error('Failed to fetch dashboard data:', error);
         toast({
           title: "Error",
           description: "Failed to load dashboard data. Using mock data.",
@@ -117,9 +102,7 @@ const Team = ({ onLogout }: TeamProps) => {
 
     toast({
       title: "Notifications sent!",
-      description: `Notified ${optInsForProduct.length} customer${
-        optInsForProduct.length === 1 ? "" : "s"
-      }.`,
+      description: `Notified ${optInsForProduct.length} customer${optInsForProduct.length === 1 ? "" : "s"}.`,
       variant: "default",
     });
 
@@ -136,7 +119,7 @@ const Team = ({ onLogout }: TeamProps) => {
 
       if (request && product) {
         // Update request status
-        request.status = "assigned";
+        request.status = 'assigned';
         request.assignedProductId = productId;
 
         // Create opt-in for the customer (we'd need to unmask phone in real app)
@@ -193,11 +176,10 @@ const Team = ({ onLogout }: TeamProps) => {
           setSelectedDashboardLabel(updatedLabel);
         }
       } catch (error) {
-        console.error("Failed to refresh dashboard data:", error);
+        console.error('Failed to refresh dashboard data:', error);
         toast({
           title: "Warning",
-          description:
-            "Alerts sent but failed to refresh dashboard data. Please refresh the page.",
+          description: "Alerts sent but failed to refresh dashboard data. Please refresh the page.",
           variant: "destructive",
         });
       } finally {
@@ -231,9 +213,7 @@ const Team = ({ onLogout }: TeamProps) => {
       // Call the actual API to send alerts
       const response = await apiService.sendAlerts({
         labelId: selectedDashboardLabel.id,
-        message:
-          message ||
-          "🚨 Alert: Product is now available! Check our store for the latest stock.",
+        message: message || "🚨 Alert: Product is now available! Check our store for the latest stock.",
       });
 
       if (response.success) {
@@ -270,11 +250,10 @@ const Team = ({ onLogout }: TeamProps) => {
               setSelectedDashboardLabel(updatedLabel);
             }
           } catch (error) {
-            console.error("Failed to refresh dashboard data:", error);
+            console.error('Failed to refresh dashboard data:', error);
             toast({
               title: "Warning",
-              description:
-                "Alerts sent but failed to refresh dashboard data. Please refresh the page.",
+              description: "Alerts sent but failed to refresh dashboard data. Please refresh the page.",
               variant: "destructive",
             });
           } finally {
@@ -292,16 +271,14 @@ const Team = ({ onLogout }: TeamProps) => {
         });
       }
     } catch (error: any) {
-      console.error("Send alerts error:", error);
+      console.error('Send alerts error:', error);
 
       // Handle rate limiting (429 status)
       if (error.response?.status === 429) {
         const errorData = error.response.data;
         toast({
           title: "Rate limit exceeded",
-          description:
-            errorData.message ||
-            "This label was already sent an alert recently.",
+          description: errorData.message || "This label was already sent an alert recently.",
           variant: "destructive",
         });
       } else {
@@ -336,9 +313,7 @@ const Team = ({ onLogout }: TeamProps) => {
       return {
         name: selectedDashboardLabel.name,
         subscriberCount: selectedDashboardLabel.waitingCount,
-        lastSendTime: selectedDashboardLabel.lastSendTimestamp
-          ? new Date(selectedDashboardLabel.lastSendTimestamp)
-          : undefined,
+        lastSendTime: selectedDashboardLabel.lastSendTimestamp ? new Date(selectedDashboardLabel.lastSendTimestamp) : undefined,
       };
     }
     return {
