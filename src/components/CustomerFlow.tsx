@@ -42,7 +42,15 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
   const [customProductName, setCustomProductName] = useState("");
   const [phone, setPhone] = useState("");
   const [isPhoneValid, setIsPhoneValid] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<{code: string; name: string; dialCode: string} | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<{
+    code: string;
+    name: string;
+    dialCode: string;
+  }>({
+    code: "CA",
+    name: "Canada",
+    dialCode: "+1",
+  });
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [isImageValid, setIsImageValid] = useState(false);
   const [consent, setConsent] = useState(false);
@@ -327,7 +335,7 @@ const CustomerFlow = ({ locationId }: CustomerFlowProps) => {
     setCustomProductName("");
     setPhone("");
     setIsPhoneValid(false);
-    setSelectedCountry(null);
+    setSelectedCountry({ code: "CA", name: "Canada", dialCode: "+1" });
     setUploadedImage(null);
     setIsImageValid(false);
     setConsent(false);
