@@ -388,48 +388,6 @@ const ProductScanner = ({ onProductSelected, onBack, onAlertsSent }: ProductScan
                   <AlertDescription>{scanError}</AlertDescription>
                 </Alert>
               )}
-
-              {/* Test Codes */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm font-medium text-blue-800 mb-2">Test Product Codes:</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setManualCode("DRONE")}
-                    className="text-xs"
-                  >
-                    DRONE
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setManualCode("LAPTOP")}
-                    className="text-xs"
-                  >
-                    LAPTOP
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setManualCode("PHONE")}
-                    className="text-xs"
-                  >
-                    PHONE
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setManualCode("TABLET")}
-                    className="text-xs"
-                  >
-                    TABLET
-                  </Button>
-                </div>
-                <p className="text-xs text-blue-600 mt-2">
-                  Click any code above to test, or enter your own product code
-                </p>
-              </div>
             </CardContent>
           </Card>
 
